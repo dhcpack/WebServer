@@ -3,4 +3,6 @@ project(WebServer)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(WebServer main.cpp ./threadpool/threadpool.cpp)
+add_executable(WebServer main.cpp ./threadpool/threadpool.cpp ./lock/locker.cpp ./log/log.cpp)
+
+target_link_libraries(${PROJECT_NAME} pthread)
