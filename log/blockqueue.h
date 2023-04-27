@@ -18,7 +18,7 @@
 template<class Value_type>
 class BlockQueue {
 public:
-    explicit BlockQueue(size_t MaxCapacity = 1000);
+    explicit BlockQueue(uint32_t MaxCapacity = 1024);
 
     ~BlockQueue();
 
@@ -30,9 +30,9 @@ public:
 
     void close();
 
-    size_t size();
+    uint32_t size();
 
-    size_t capacity();
+    uint32_t capacity();
 
     Value_type front();
 
@@ -51,7 +51,7 @@ public:
 private:
     std::deque<Value_type> deque_;
 
-    size_t capacity_;
+    uint32_t capacity_;
 
     std::mutex mutex_;
 
@@ -63,7 +63,7 @@ private:
 };
 
 template<class Value_type>
-BlockQueue<Value_type>::BlockQueue(size_t capacity) : capacity_(capacity), isClose_(false) {}
+BlockQueue<Value_type>::BlockQueue(uint32_t capacity) : capacity_(capacity), isClose_(false) {}
 
 template<class Value_type>
 BlockQueue<Value_type>::~BlockQueue() {
@@ -85,7 +85,7 @@ bool BlockQueue<Value_type>::empty() {
 template<class Value_type>
 bool BlockQueue<Value_type>::full() {
     std::lock_guard<std::mutex> lockGuard(mutex_);
-    return deque_.size() >= capacity();
+    return deque_.size() >= capacity_;
 }
 
 template<class Value_type>
@@ -98,13 +98,13 @@ void BlockQueue<Value_type>::close() {
 }
 
 template<class Value_type>
-size_t BlockQueue<Value_type>::size() {
+uint32_t BlockQueue<Value_type>::size() {
     std::lock_guard<std::mutex> lockGuard(mutex_);
     return deque_.size();
 }
 
 template<class Value_type>
-size_t BlockQueue<Value_type>::capacity() {
+uint32_t BlockQueue<Value_type>::capacity() {
     std::lock_guard<std::mutex> lockGuard(mutex_);
     return capacity_;
 }
@@ -169,6 +169,9 @@ bool BlockQueue<Value_type>::pop(Value_type &item, time_t timeout) {
     return true;
 }
 
+/*
+ * 唤醒一个消费者
+ * */
 template<class Value_type>
 void BlockQueue<Value_type>::flush() {
     condConsumer_.notify_one();
