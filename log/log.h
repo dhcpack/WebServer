@@ -17,6 +17,7 @@
 #include <fstream>
 
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <cstdarg>
 
 #include "blockqueue.h"
@@ -28,15 +29,16 @@ enum class Level {
 
 class Log {
 public:
+    /*
+     * init must be called first!!!
+     * */
     void init(uint32_t queueCapacity = 1024);
 
     static Log &instance();
 
-    void new_file(std::tm tm);
+    void new_file(std::tm tm, long usec);
 
     void write_log(Level level, const char *format, ...);
-
-//    void flush();
 
     // For Singleton
     // 删除拷贝构造函数

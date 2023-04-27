@@ -18,11 +18,11 @@ Log::~Log() {
     }
 }
 
-void Log::new_file(std::tm tm) {
+void Log::new_file(std::tm tm, long usec) {
     // 拼接日志名称
     char fileName[MAX_LOG_NAME_LEN] = {0};
-    snprintf(fileName, MAX_LOG_NAME_LEN - 1, "./%04d_%02d_%02d_%02d_%02d_%02d.log",
-             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    snprintf(fileName, MAX_LOG_NAME_LEN - 1, "./%04d_%02d_%02d_%02d_%02d_%02d_%04ld.log",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, usec);
 
     // 打开文件
     file_stream_ = std::ofstream(fileName);
@@ -30,15 +30,16 @@ void Log::new_file(std::tm tm) {
 
 
 void Log::init(uint32_t queueCapacity) {
-    auto now = std::chrono::system_clock::now();
-    std::time_t t = std::chrono::system_clock::to_time_t(now);
-    std::tm tm = *std::localtime(&t);
+    struct timeval now = {0, 0};
+    gettimeofday(&now, nullptr);
+    time_t t = now.tv_sec;
+    std::tm tm = *localtime(&t);
 
     isOpen_ = true;
     total_lines_ = 0;
 
     // 新建文件流、队列和线程
-    new_file(tm);
+    new_file(tm, now.tv_usec);
     blockQueue_.reset(new BlockQueue<std::string>(queueCapacity));
     writeThread_.reset(new std::thread(async_write_thread));
 }
@@ -61,21 +62,21 @@ void Log::async_write_thread() {
 }
 
 void Log::write_log(Level level, const char *format, ...) {
-    auto now = std::chrono::system_clock::now();
-    std::time_t t = std::chrono::system_clock::to_time_t(now);
-    std::tm tm = *std::localtime(&t);
+    struct timeval now = {0, 0};
+    gettimeofday(&now, nullptr);
+    time_t t = now.tv_sec;
+    std::tm tm = *localtime(&t);
 
     std::unique_lock<std::mutex> uniqueLock(mutex_);
     if (total_lines_ != 0 && total_lines_ % MAX_FILE_LINE == 0) {  // 写满一个文件
         file_stream_.flush();
         file_stream_.close();
-        new_file(tm);  // 新建文件
+        new_file(tm, now.tv_usec);  // 新建文件
     }
 
     total_lines_++;
     int n = snprintf(buff_.BeginWrite(), 128, "%d-%02d-%02d %02d:%02d:%02d.%06ld ",
-                     tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
-                     std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
+                     tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, now.tv_usec);
     buff_.HasWritten(n);
 
     std::string tag;
