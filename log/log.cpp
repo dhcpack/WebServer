@@ -2,7 +2,6 @@
 // Created by ylhappy on 2023/4/25.
 //
 #include "log.h"
-#include <iostream>
 
 Log::~Log() {
     if (writeThread_ && writeThread_->joinable()) {
@@ -53,17 +52,6 @@ void Log::async_write_log() {
     std::string curr_log;
     while (blockQueue_->pop(curr_log)) {
         std::lock_guard<std::mutex> lockGuard(mutex_);
-        if (total_lines_ != 0 && total_lines_ % MAX_LOG_NAME_LEN == 0) {  // 写满一个文件
-            auto now = std::chrono::system_clock::now();
-            std::time_t t = std::chrono::system_clock::to_time_t(now);
-            std::tm tm = *std::localtime(&t);
-
-            file_stream_.flush();
-            file_stream_.close();
-            new_file(tm);
-        }
-        total_lines_++;
-        printf("total lines: %d, currlog = %s\n", total_lines_, curr_log.c_str());
         file_stream_ << curr_log;
     }
 }
@@ -78,7 +66,13 @@ void Log::write_log(Level level, const char *format, ...) {
     std::tm tm = *std::localtime(&t);
 
     std::unique_lock<std::mutex> uniqueLock(mutex_);
+    if (total_lines_ != 0 && total_lines_ % MAX_FILE_LINE == 0) {  // 写满一个文件
+        file_stream_.flush();
+        file_stream_.close();
+        new_file(tm);  // 新建文件
+    }
 
+    total_lines_++;
     int n = snprintf(buff_.BeginWrite(), 128, "%d-%02d-%02d %02d:%02d:%02d.%06ld ",
                      tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
                      std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());

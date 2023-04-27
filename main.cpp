@@ -21,6 +21,7 @@ int main() {
     for (int i = 1; i <= 50001; i++) {
         if (i == 50001) {
             cout << "haha" << endl;
+            sleep(1);
         }
         Log::instance().write_log(Level::DEBUG, "This is %d.", i);
     }
