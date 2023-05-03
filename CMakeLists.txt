@@ -3,6 +3,6 @@ project(WebServer)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(WebServer main.cpp ./lock/locker.cpp ./log/log.cpp ./buffer/buffer.cpp)
+add_executable(WebServer main.cpp ./lock/locker.cpp ./log/log.cpp ./buffer/buffer.cpp ./mysqlpool/mysqlpool.cpp)
 
 target_link_libraries(${PROJECT_NAME} pthread)
