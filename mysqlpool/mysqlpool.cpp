@@ -19,7 +19,7 @@ bool MySqlPool::init(const char *host, uint16_t port, const char *user, const ch
         connQueue_.push(sql);
     }
     MAX_CONNECTIONS = connSize;
-    sem_init(&semId_, 0, MAX_CONNECTIONS);
+    sem_init(&sem_, 0, MAX_CONNECTIONS);
     return true;
 }
 
@@ -34,7 +34,7 @@ MYSQL *MySqlPool::getConn() {
         LOG_WARN("MySqlPool busy!");
         return nullptr;
     }
-    sem_wait(&semId_);
+    sem_wait(&sem_);
     {
         std::lock_guard<std::mutex> locker(mutex_);
         sql = connQueue_.front();
@@ -47,7 +47,7 @@ void MySqlPool::freeConn(MYSQL *conn) {
     if (conn == nullptr) return;
     std::lock_guard<std::mutex> locker(mutex_);
     connQueue_.push(conn);
-    sem_post(&semId_);
+    sem_post(&sem_);
 }
 
 void MySqlPool::ClosePool() {
@@ -58,6 +58,7 @@ void MySqlPool::ClosePool() {
         mysql_close(item);
     }
     mysql_library_end();
+    sem_destroy(&sem_);
 }
 
 size_t MySqlPool::GetFreeConnCount() {

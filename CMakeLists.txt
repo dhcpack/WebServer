@@ -3,6 +3,6 @@ project(WebServer)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(WebServer main.cpp ./lock/locker.cpp ./log/log.cpp ./buffer/buffer.cpp ./mysqlpool/mysqlpool.cpp)
+add_executable(WebServer main.cpp ./log/log.cpp ./buffer/buffer.cpp ./mysqlpool/mysqlpool.cpp ./timer/heaptimer.cpp)
 
 target_link_libraries(${PROJECT_NAME} pthread mysqlclient)
