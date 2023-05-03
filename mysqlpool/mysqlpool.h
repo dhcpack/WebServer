@@ -18,29 +18,27 @@ public:
     /*
      * init must be called first
      * */
-    void init(const char *host, int port, const char *user, const char *pwd, const char *dbName, int connSize);
+    bool init(const char *host, uint16_t port, const char *user, const char *pwd, const char *dbName, size_t connSize);
 
-    static MySqlPool *Instance();
+    static MySqlPool &instance();
 
-    MYSQL *GetConn();
+    MYSQL *getConn();
 
-    void FreeConn(MYSQL *conn);
+    void freeConn(MYSQL *conn);
 
-    int GetFreeConnCount();
+    size_t GetFreeConnCount();
 
     void ClosePool();
 
 private:
-    MySqlPool();
+    MySqlPool() = default;
 
     ~MySqlPool();
 
-    int MAX_CONN_;
-    int useCount_;
-    int freeCount_;
+    size_t MAX_CONNECTIONS;
 
-    std::queue<MYSQL *> connQue_;
-    std::mutex mtx_;
+    std::queue<MYSQL *> connQueue_;
+    std::mutex mutex_;
     sem_t semId_;
 };
 

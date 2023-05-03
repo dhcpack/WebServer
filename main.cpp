@@ -1,26 +1,21 @@
 #include <iostream>
 #include <thread>
 #include "./log/log.h"
+#include "./mysqlpool/mysqlpool.h"
 
 using namespace std;
 
-void Thread_push(int id) {
-    for (int i = 1; i <= 1000; i++) {
-        std::cout << id << "--" << i << std::endl;
-        Log::instance().write_log(Level::DEBUG, "This is %d by thread %d\n", i, id);
-    }
-}
-
 int main() {
-    Log::instance().init(INT16_MAX);
-    // 新建十个线程执行函数Thread_push, Thread_push中传递的参数分别是1~10
-    vector<std::thread> threads;
-    for (int i = 1; i <= 1000; i++) {
-        threads.emplace_back(Thread_push, i);
-    }
+    Log &log = Log::instance();
+    if (log.init()) {
+        LOG_INFO("Log Init Succeed\n");
+    } else return -1;
 
-    for (auto &t: threads) t.join();
-
-    std::cout << "Finish!" << std::endl;
+    LOG_INFO("Init MySqlPool ...\n");
+    MySqlPool &mySqlPool = MySqlPool::instance();
+    if (mySqlPool.init("127.0.0.1", 3306, "ws", "123456", "webserver", 10)) {
+        LOG_INFO("MySql init Succeed\n");
+    } else return -2;
+    cout << "Succeed!" << endl;
     return 0;
 }

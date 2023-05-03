@@ -24,7 +24,7 @@
 #include "../buffer/buffer.h"
 
 enum class Level {
-    DEBUG, INFO, WARNING, ERROR, FATAL
+    DEBUG, INFO, WARN, ERROR, FATAL
 };
 
 class Log {
@@ -32,13 +32,15 @@ public:
     /*
      * init must be called first!!!
      * */
-    void init(uint32_t queueCapacity = 1024);
+    bool init(uint32_t queueCapacity = 1024);
 
     static Log &instance();
 
     void new_file(std::tm tm, long usec);
 
     void write_log(Level level, const char *format, ...);
+
+    bool isOpen() const;
 
     // For Singleton
     // 删除拷贝构造函数
@@ -59,7 +61,7 @@ private:
     static const uint64_t MAX_FILE_LINE = 50000;
     static const uint64_t MAX_LOG_NAME_LEN = 128;
 
-    bool isOpen_;
+    bool isOpen_ = false;
     uint64_t total_lines_;
     Buffer buff_;
     std::ofstream file_stream_;
@@ -70,5 +72,36 @@ private:
     static void async_write_thread();
 };
 
+
+template<typename... Args>
+void LOG_BASE(const Level level, const char *format, Args... args) {
+    Log &log = Log::instance();
+    if (log.isOpen()) log.write_log(level, format, args...);
+}
+
+template<typename... Args>
+void LOG_DEBUG(const char *format, Args... args) {
+    LOG_BASE(Level::DEBUG, format, args...);
+}
+
+template<typename... Args>
+void LOG_INFO(const char *format, Args... args) {
+    LOG_BASE(Level::INFO, format, args...);
+}
+
+template<typename... Args>
+void LOG_WARN(const char *format, Args... args) {
+    LOG_BASE(Level::WARN, format, args...);
+}
+
+template<typename... Args>
+void LOG_ERROR(const char *format, Args... args) {
+    LOG_BASE(Level::ERROR, format, args...);
+}
+
+template<typename... Args>
+void LOG_FATAL(const char *format, Args... args) {
+    LOG_BASE(Level::FATAL, format, args...);
+}
 
 #endif // WEBSERVER_LOG_H

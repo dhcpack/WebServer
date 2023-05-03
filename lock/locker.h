@@ -13,7 +13,7 @@
 
  RAII封装
  C++11 Style : https://blog.csdn.net/mingyuan_liu/article/details/115588505
- 互斥锁：std::mutex
+ 互斥锁：std::mutex_
         lock_guard<_Mutex> RAII
         unique_guard<_Mutex> RAII
 

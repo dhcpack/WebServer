@@ -47,7 +47,7 @@ public:
     }
 
     template<class F>
-    void AddTask(F &&task) {  // 模板函数，右值引用  ==>  万能引用
+    void addTask(F &&task) {  // 模板函数，右值引用  ==>  万能引用
         {
             std::lock_guard<std::mutex> locker(pool_->mtx);
             pool_->tasks.emplace(std::forward<F>(task));  // 完美转发  保持左值和右值

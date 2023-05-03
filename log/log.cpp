@@ -21,7 +21,7 @@ Log::~Log() {
 void Log::new_file(std::tm tm, long usec) {
     // 拼接日志名称
     char fileName[MAX_LOG_NAME_LEN] = {0};
-    snprintf(fileName, MAX_LOG_NAME_LEN - 1, "./%04d_%02d_%02d_%02d_%02d_%02d_%04ld.log",
+    snprintf(fileName, MAX_LOG_NAME_LEN - 1, "./debug_log/%04d_%02d_%02d_%02d_%02d_%02d_%04ld.log",
              tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, usec);
 
     // 打开文件
@@ -29,7 +29,7 @@ void Log::new_file(std::tm tm, long usec) {
 }
 
 
-void Log::init(uint32_t queueCapacity) {
+bool Log::init(uint32_t queueCapacity) {
     struct timeval now = {0, 0};
     gettimeofday(&now, nullptr);
     time_t t = now.tv_sec;
@@ -42,6 +42,7 @@ void Log::init(uint32_t queueCapacity) {
     new_file(tm, now.tv_usec);
     blockQueue_.reset(new BlockQueue<std::string>(queueCapacity));
     writeThread_.reset(new std::thread(async_write_thread));
+    return true;
 }
 
 Log &Log::instance() {
@@ -82,7 +83,7 @@ void Log::write_log(Level level, const char *format, ...) {
     std::string tag;
     if (level == Level::DEBUG) tag = "[DEBUG]: ";
     else if (level == Level::INFO) tag = "[INFO] : ";
-    else if (level == Level::WARNING) tag = "[WARN] : ";
+    else if (level == Level::WARN) tag = "[WARN] : ";
     else if (level == Level::ERROR) tag = "[ERROR]: ";
     else if (level == Level::FATAL) tag = "[FATAL]: ";
     buff_.Append(tag);
@@ -91,12 +92,16 @@ void Log::write_log(Level level, const char *format, ...) {
     va_start(vaList, format);
     int m = vsnprintf(buff_.BeginWrite(), buff_.WritableBytes(), format, vaList);
     va_end(vaList);
-
     buff_.HasWritten(m);
-    buff_.Append("\r\n", 1);
+
+//    buff_.Append("\r\n", 1);
     if (blockQueue_ && !blockQueue_->full()) blockQueue_->push_back(buff_.RetrieveAllToStr());
 
     buff_.RetrieveAll();
+}
+
+bool Log::isOpen() const {
+    return isOpen_;
 }
 
 //void Log::flush() {
