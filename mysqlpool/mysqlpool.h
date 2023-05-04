@@ -42,4 +42,21 @@ private:
     sem_t sem_;
 };
 
+// MySqlPoll RAII
+class MySqlManager {
+public:
+    explicit MySqlManager(MYSQL **sql) {
+        *sql = MySqlPool::instance().getConn();
+        sql_ = *sql;
+    }
+
+    ~MySqlManager() {
+        MySqlPool::instance().freeConn(sql_);
+    }
+
+private:
+    MYSQL *sql_;
+};
+
+
 #endif //WEBSERVER_MYSQLPOOL_H

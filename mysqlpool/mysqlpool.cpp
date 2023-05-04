@@ -9,11 +9,11 @@ bool MySqlPool::init(const char *host, uint16_t port, const char *user, const ch
     for (int i = 0; i < connSize; i++) {
         MYSQL *sql;
         if ((sql = mysql_init(nullptr)) == nullptr) {
-            LOG_ERROR("Error %u: %s\n", mysql_errno(sql), mysql_error(sql));
+            LOG_ERROR("MySql init error: %s\n", mysql_error(sql));
             return false;
         }
         if ((mysql_real_connect(sql, host, user, pwd, dbName, port, nullptr, 0)) == nullptr) {
-            LOG_ERROR("Error %u: %s\n", mysql_errno(sql), mysql_error(sql));
+            LOG_ERROR("MySql connect error: %s\n", mysql_error(sql));
             return false;
         }
         connQueue_.push(sql);
