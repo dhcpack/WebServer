@@ -4,7 +4,7 @@
 
 #include "httprequest.h"
 
-using namespace std;
+//using namespace std;
 
 /*
  * 初始化类的静态变量
@@ -45,7 +45,7 @@ bool HttpRequest::parse(Buffer &buff) {
         return false;
     }
     while (buff.ReadableBytes() && state_ != FINISH) {
-        const char *lineEnd = search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
+        const char *lineEnd = std::search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
         std::string line(buff.Peek(), lineEnd);
         switch (state_) {
             case REQUEST_LINE:
@@ -66,7 +66,7 @@ bool HttpRequest::parse(Buffer &buff) {
         if (lineEnd == buff.BeginWrite()) break;
         buff.RetrieveUntil(lineEnd + 2);
     }
-    string keepalive = isKeepAlive() ? "true" : "false";
+    std::string keepalive = isKeepAlive() ? "true" : "false";
     LOG_INFO("HttpRequest Parsed! Method: %s, Path: %s, Version: %s, KeepAlive: %s\n",
              method_.c_str(), path_.c_str(), version_.c_str(), keepalive.c_str());
     getReturnHtml_();
@@ -74,9 +74,9 @@ bool HttpRequest::parse(Buffer &buff) {
     return true;
 }
 
-bool HttpRequest::parseRequestLine_(const string &line) {
-    regex patten("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
-    smatch subMatch;
+bool HttpRequest::parseRequestLine_(const std::string &line) {
+    std::regex patten("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
+    std::smatch subMatch;
     if (regex_match(line, subMatch, patten)) {
         method_ = subMatch[1];
         path_ = subMatch[2];
@@ -102,9 +102,9 @@ void HttpRequest::getReturnHtml_() {
     }
 }
 
-void HttpRequest::parseHeaders_(const string &line) {
-    regex patten("^([^:]*): ?(.*)$");
-    smatch subMatch;
+void HttpRequest::parseHeaders_(const std::string &line) {
+    std::regex patten("^([^:]*): ?(.*)$");
+    std::smatch subMatch;
     if (regex_match(line, subMatch, patten)) {
         headers_[subMatch[1]] = subMatch[2];
     } else {
@@ -112,7 +112,7 @@ void HttpRequest::parseHeaders_(const string &line) {
     }
 }
 
-void HttpRequest::parseBody_(const string &line) {
+void HttpRequest::parseBody_(const std::string &line) {
     // 解析POST请求的请求体，通常的GET请求没有请求体
     body_ = line;
     parsePost_();
