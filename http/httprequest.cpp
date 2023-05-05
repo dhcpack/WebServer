@@ -6,28 +6,6 @@
 
 using namespace std;
 
-/* GET */
-//GET /index.html HTTP/1.1
-//Host: www.example.com
-//User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36
-//Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
-//Accept-Language: en-US,en;q=0.5
-//Accept-Encoding: gzip, deflate, br
-//Connection: keep-alive
-//Referer: https://www.google.com/
-
-/* POST */
-//POST /api/login HTTP/1.1
-//Host: example.com
-//User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0
-//Accept: application/json
-//Content-Type: application/json
-//Content-Length: 43
-//Connection: keep-alive
-//
-//{"username":"user123", "password":"password123"}
-
-
 /*
  * 初始化类的静态变量
  * */
@@ -42,7 +20,7 @@ std::unordered_map<std::string, std::function<std::string(
 HttpRequest::HttpRequest() {
     method_ = path_ = version_ = body_ = "";
     state_ = REQUEST_LINE;
-    header_.clear();
+    headers_.clear();
     post_.clear();
 
     if (!htmlLoaded_) {
@@ -73,8 +51,8 @@ bool HttpRequest::parse(Buffer &buff) {
             case REQUEST_LINE:
                 if (!parseRequestLine_(line)) return false;
                 break;
-            case HEADER:
-                parseHeader_(line);
+            case HEADERS:
+                parseHeaders_(line);
                 if (buff.ReadableBytes() <= 2) {
                     state_ = FINISH;
                 }
@@ -103,7 +81,7 @@ bool HttpRequest::parseRequestLine_(const string &line) {
         method_ = subMatch[1];
         path_ = subMatch[2];
         version_ = subMatch[3];
-        state_ = HEADER;
+        state_ = HEADERS;
         return true;
     }
     LOG_ERROR("RequestLine Parse Error.");
@@ -124,17 +102,18 @@ void HttpRequest::getReturnHtml_() {
     }
 }
 
-void HttpRequest::parseHeader_(const string &line) {
+void HttpRequest::parseHeaders_(const string &line) {
     regex patten("^([^:]*): ?(.*)$");
     smatch subMatch;
     if (regex_match(line, subMatch, patten)) {
-        header_[subMatch[1]] = subMatch[2];
+        headers_[subMatch[1]] = subMatch[2];
     } else {
         state_ = BODY;
     }
 }
 
 void HttpRequest::parseBody_(const string &line) {
+    // 解析POST请求的请求体，通常的GET请求没有请求体
     body_ = line;
     parsePost_();
     state_ = FINISH;
@@ -142,15 +121,15 @@ void HttpRequest::parseBody_(const string &line) {
 
 
 bool HttpRequest::isKeepAlive() const {
-    if (header_.count("Connection")) {
-        return header_.find("Connection")->second == "keep-alive" && version_ == "1.1";
+    if (headers_.count("Connection")) {
+        return headers_.find("Connection")->second == "keep-alive" && version_ == "1.1";
     }
     return false;
 }
 
 void HttpRequest::parsePost_() {
     if (method_ != "POST") return;
-    if (header_["Content-Type"] == "application/x-www-form-urlencoded") parseUrlencoded();
+    if (headers_["Content-Type"] == "application/x-www-form-urlencoded") parseUrlencoded();
     else {
         LOG_ERROR("Content-Type not Supported.\n");
         return;

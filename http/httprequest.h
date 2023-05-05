@@ -5,6 +5,15 @@
 #ifndef WEBSERVER_HTTPREQUEST_H
 #define WEBSERVER_HTTPREQUEST_H
 
+/*
+ * 解析HTTP请求报文
+ * 状态机
+ *
+ * Request Line
+ * Headers
+ * Content
+ * */
+
 #include <unordered_map>
 #include <string>
 #include <regex>
@@ -17,7 +26,7 @@ class HttpRequest {
 public:
     enum PARSE_STATE {
         REQUEST_LINE,
-        HEADER,
+        HEADERS,
         BODY,
         FINISH,
     };
@@ -58,7 +67,7 @@ public:
 private:
     bool parseRequestLine_(const std::string &line);
 
-    void parseHeader_(const std::string &line);
+    void parseHeaders_(const std::string &line);
 
     void parseBody_(const std::string &line);
 
@@ -78,7 +87,7 @@ private:
     /*  方法，路径，版本号  请求体  */
     std::string method_, path_, version_, body_;
     /*  请求头  */
-    std::unordered_map<std::string, std::string> header_;
+    std::unordered_map<std::string, std::string> headers_;
     /*  请求体  */
     std::unordered_map<std::string, std::string> post_;
 
