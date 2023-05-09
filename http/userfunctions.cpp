@@ -35,14 +35,14 @@ std::string get_login(const std::string &url) {
  * */
 std::string post_register(const std::unordered_map<std::string, std::string> &post) {
     const std::string &username = post.find("username")->second, &password = post.find("password")->second;
-    LOG_INFO("Register with username = %s, password = %s\n", username.c_str(), password.c_str());
+    LOG_DEBUG("Register with username = %s, password = %s\n", username.c_str(), password.c_str());
     MYSQL *sql;
     MySqlManager manager(&sql);
 
     // Construct the query to retrieve the user's information
     char query[256] = {0};
     snprintf(query, 256, "SELECT username, password FROM user WHERE username='%s' LIMIT 1", username.c_str());
-    LOG_INFO("MySql query: %s", query);
+    LOG_DEBUG("MySql query: %s\n", query);
 
     // Execute the query
     if (mysql_query(sql, query)) {
@@ -60,20 +60,20 @@ std::string post_register(const std::unordered_map<std::string, std::string> &po
     // Get the number of rows returned
     uint64_t num_rows = mysql_num_rows(res);
     if (num_rows != 0) {
-        LOG_INFO("User %s already exist.\n", username.c_str());
+        LOG_DEBUG("User %s already exist.\n", username.c_str());
         mysql_free_result(res);
         return "/error.html";
     }
 
-    snprintf(query, 256, "insert into user(username, password) values(%s, %s)", username.c_str(), password.c_str());
-    LOG_INFO("MySql insert: %s", query);
+    snprintf(query, 256, "insert into user(username, password) values('%s', '%s')", username.c_str(), password.c_str());
+    LOG_DEBUG("MySql insert: %s\n", query);
 
     // Execute the insert
     if (mysql_query(sql, query)) {
         LOG_ERROR("MySql insert error: %s\n", mysql_error(sql));
         return "/error.html";
     }
-    LOG_INFO("User %s, password %s register succeed!", username.c_str(), password.c_str());
+    LOG_DEBUG("User %s, password %s register succeed!\n", username.c_str(), password.c_str());
     return "/login.html";
 
 
@@ -81,14 +81,14 @@ std::string post_register(const std::unordered_map<std::string, std::string> &po
 
 std::string post_login(const std::unordered_map<std::string, std::string> &post) {
     const std::string &username = post.find("username")->second, &password = post.find("password")->second;
-    LOG_INFO("Login with username = %s, password = %s\n", username.c_str(), password.c_str());
+    LOG_DEBUG("Login with username = %s, password = %s\n", username.c_str(), password.c_str());
     MYSQL *sql;
     MySqlManager manager(&sql);
 
     // Construct the query to retrieve the user's information
     char query[256] = {0};
     snprintf(query, 256, "SELECT username, password FROM user WHERE username='%s' LIMIT 1", username.c_str());
-    LOG_INFO("MySql query: %s", query);
+    LOG_DEBUG("MySql query: %s\n", query);
 
     // Execute the query
     if (mysql_query(sql, query)) {
@@ -106,7 +106,7 @@ std::string post_login(const std::unordered_map<std::string, std::string> &post)
     // Get the number of rows returned
     uint64_t num_rows = mysql_num_rows(res);
     if (num_rows == 0) {
-        LOG_INFO("User %s not found.\n", username.c_str());
+        LOG_DEBUG("User %s not found.\n", username.c_str());
         mysql_free_result(res);
         return "/error.html";
     }
@@ -119,10 +119,10 @@ std::string post_login(const std::unordered_map<std::string, std::string> &post)
 
     // Check the password
     if (password == db_password) {
-        LOG_INFO("User %s login succeed!", username.c_str());
+        LOG_DEBUG("User %s login succeed!\n", username.c_str());
         return "/welcome.html";
     } else {
-        LOG_INFO("Wrong password.");
+        LOG_DEBUG("Wrong password.\n");
         return "/error.html";
     }
 }

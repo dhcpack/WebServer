@@ -4,7 +4,7 @@ Yuelin's WebServer
 database-settings:
 ```cpp
 string user = "ws";
-string passwd = "123456";
+string password = "123456";
 string databasename = "webserver";
 ```
 ```mysql
@@ -14,10 +14,10 @@ use webserver;
 
 CREATE TABLE user(
     username char(50) NULL,
-    passwd char(50) NULL
+    password char(50) NULL
 )ENGINE=InnoDB;
 
-INSERT INTO user(username, passwd) VALUES('ylhappy', '123456');
+INSERT INTO user(username, password) VALUES('ylhappy', '123456');
 
 ```
 

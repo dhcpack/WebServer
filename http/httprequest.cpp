@@ -67,10 +67,11 @@ bool HttpRequest::parse(Buffer &buff) {
         buff.RetrieveUntil(lineEnd + 2);
     }
     std::string keepalive = isKeepAlive() ? "true" : "false";
-    LOG_INFO("HttpRequest Parsed! Method: %s, Path: %s, Version: %s, KeepAlive: %s\n",
-             method_.c_str(), path_.c_str(), version_.c_str(), keepalive.c_str());
+    LOG_DEBUG("HttpRequest Parsed! Method: %s, Path: %s, Version: %s, KeepAlive: %s\n",
+              method_.c_str(), path_.c_str(), version_.c_str(), keepalive.c_str());
+    LOG_INFO("%s %s %s %s", headers_["host"].c_str(), method_.c_str(), path_.c_str(), "80");
     getReturnHtml_();
-    LOG_INFO("Result Html generated!\n");
+    LOG_DEBUG("Result Html generated!\n");
     return true;
 }
 
@@ -84,7 +85,7 @@ bool HttpRequest::parseRequestLine_(const std::string &line) {
         state_ = HEADERS;
         return true;
     }
-    LOG_ERROR("RequestLine Parse Error.");
+    LOG_ERROR("RequestLine Parse Error! (Request Line: \"%s\")", line.c_str());
     return false;
 }
 
@@ -131,7 +132,7 @@ void HttpRequest::parsePost_() {
     if (method_ != "POST") return;
     if (headers_["Content-Type"] == "application/x-www-form-urlencoded") parseUrlencoded();
     else {
-        LOG_ERROR("Content-Type not Supported.\n");
+        LOG_ERROR("Content-Type not Supported! (Content-Type: \"%s\")\n", headers_["Content-Type"].c_str());
         return;
     }
 }

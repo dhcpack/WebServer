@@ -18,14 +18,22 @@ Log::~Log() {
     }
 }
 
-void Log::new_file(std::tm tm, long usec) {
+void Log::new_file(std::tm tm) {
     // 拼接日志名称
     char fileName[MAX_LOG_NAME_LEN] = {0};
-    snprintf(fileName, MAX_LOG_NAME_LEN - 1, "./debug_log/%04d_%02d_%02d_%02d_%02d_%02d_%04ld.log",
-             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, usec);
+    snprintf(fileName, MAX_LOG_NAME_LEN - 1, "./debug_log/%04d-%02d-%02d %02d-%02d-%02d.log",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     // 打开文件
     file_stream_ = std::ofstream(fileName);
+
+    // log头
+    char log_date[25];
+    snprintf(log_date, 25, "%04d-%02d-%02d %02d:%02d:%02d",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    file_stream_ << "#Software: YL's Webserver version 1.0\n"
+                    "#Date: " << log_date << "\n" <<
+                 "#Fields: date time client-ip client-method query-url server-port status response-size\n";
 }
 
 
@@ -39,7 +47,7 @@ bool Log::init(uint32_t queueCapacity) {
     total_lines_ = 0;
 
     // 新建文件流、队列和线程
-    new_file(tm, now.tv_usec);
+    new_file(tm);
     blockQueue_.reset(new BlockQueue<std::string>(queueCapacity));
     writeThread_.reset(new std::thread(async_write_thread));
     return true;
@@ -72,7 +80,7 @@ void Log::write_log(Level level, const char *format, ...) {
     if (total_lines_ != 0 && total_lines_ % MAX_FILE_LINE == 0) {  // 写满一个文件
         file_stream_.flush();
         file_stream_.close();
-        new_file(tm, now.tv_usec);  // 新建文件
+        new_file(tm);  // 新建文件
     }
 
     total_lines_++;

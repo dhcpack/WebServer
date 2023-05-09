@@ -36,7 +36,7 @@ public:
 
     static Log &instance();
 
-    void new_file(std::tm tm, long usec);
+    void new_file(std::tm tm);
 
     void write_log(Level level, const char *format, ...);
 
