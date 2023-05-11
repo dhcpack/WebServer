@@ -9,7 +9,7 @@
 /*
  * 初始化类的静态变量
  * */
-bool HttpRequest::htmlLoaded_ = false;
+bool HttpRequest::userFuncsLoaded_ = false;
 /*  GET请求对应的视图函数  */
 std::unordered_map<std::string, std::function<std::string(std::string)>> HttpRequest::GET_FUNC{};
 /*  POST请求对应的视图函数  */
@@ -18,18 +18,21 @@ std::unordered_map<std::string, std::function<std::string(
 
 
 HttpRequest::HttpRequest() {
+    clear();
+    if (!userFuncsLoaded_) {
+        loadUserFuncs();
+        userFuncsLoaded_ = true;
+    }
+}
+
+void HttpRequest::clear() {
     method_ = path_ = version_ = body_ = "";
     state_ = REQUEST_LINE;
     headers_.clear();
     post_.clear();
-
-    if (!htmlLoaded_) {
-        loadHtml();
-        htmlLoaded_ = true;
-    }
 }
 
-void HttpRequest::loadHtml() {
+void HttpRequest::loadUserFuncs() {
     // load GET_FUNC
     GET_FUNC["/index"] = get_index, GET_FUNC["/welcome"] = get_welcome, GET_FUNC["/video"] = get_video;
     GET_FUNC["/picture"] = get_picture, GET_FUNC["/register"] = get_register, GET_FUNC["/login"] = get_login;

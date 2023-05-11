@@ -4,8 +4,6 @@
 
 #include "httpconnect.h"
 
-//using namespace std;
-
 const char *HttpConn::srcDir;
 std::atomic<int> HttpConn::userCount;
 bool HttpConn::isET;
@@ -94,6 +92,7 @@ ssize_t HttpConn::write(int *saveErrno) {
 }
 
 bool HttpConn::process() {
+    request_.clear();
     if (readBuff_.ReadableBytes() <= 0) {
         return false;
     } else if (request_.parse(readBuff_)) {

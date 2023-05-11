@@ -62,7 +62,7 @@ public:
 
     bool isKeepAlive() const;
 
-    static void loadHtml();
+    void clear();
 
 private:
     bool parseRequestLine_(const std::string &line);
@@ -95,12 +95,14 @@ private:
     /*
      * USER DEFINED FUNCS
      * */
-    static bool htmlLoaded_;
+    static bool userFuncsLoaded_;
     /*  GET请求对应的视图函数  */
     static std::unordered_map<std::string, std::function<std::string(std::string)>> GET_FUNC;
     /*  POST请求对应的视图函数  */
     static std::unordered_map<std::string,
             std::function<std::string(std::unordered_map<std::string, std::string>)>> POST_FUNC;
+
+    static void loadUserFuncs();
 };
 
 #endif //WEBSERVER_HTTPREQUEST_H
