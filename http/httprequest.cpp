@@ -4,25 +4,9 @@
 
 #include "httprequest.h"
 
-//using namespace std;
-
-/*
- * 初始化类的静态变量
- * */
-bool HttpRequest::userFuncsLoaded_ = false;
-/*  GET请求对应的视图函数  */
-std::unordered_map<std::string, std::function<std::string(std::string)>> HttpRequest::GET_FUNC{};
-/*  POST请求对应的视图函数  */
-std::unordered_map<std::string, std::function<std::string(
-        std::unordered_map<std::string, std::string>)>> HttpRequest::POST_FUNC{};
-
 
 HttpRequest::HttpRequest() {
     clear();
-    if (!userFuncsLoaded_) {
-        loadUserFuncs();
-        userFuncsLoaded_ = true;
-    }
 }
 
 void HttpRequest::clear() {
@@ -30,15 +14,6 @@ void HttpRequest::clear() {
     state_ = REQUEST_LINE;
     headers_.clear();
     post_.clear();
-}
-
-void HttpRequest::loadUserFuncs() {
-    // load GET_FUNC
-    GET_FUNC["/index"] = get_index, GET_FUNC["/welcome"] = get_welcome, GET_FUNC["/video"] = get_video;
-    GET_FUNC["/picture"] = get_picture, GET_FUNC["/register"] = get_register, GET_FUNC["/login"] = get_login;
-
-    // load POST_FUNC
-    POST_FUNC["/login"] = post_login, POST_FUNC["/register"] = post_register;
 }
 
 // 主状态机
@@ -73,8 +48,8 @@ bool HttpRequest::parse(Buffer &buff) {
     LOG_DEBUG("HttpRequest Parsed! Method: %s, Path: %s, Version: %s, KeepAlive: %s\n",
               method_.c_str(), path_.c_str(), version_.c_str(), keepalive.c_str());
     LOG_INFO("%s %s %s %s", headers_["host"].c_str(), method_.c_str(), path_.c_str(), "80");
-    getReturnHtml_();
-    LOG_DEBUG("Result Html generated!\n");
+//    getReturnHtml_();
+//    LOG_DEBUG("Result Html generated!\n");
     return true;
 }
 
@@ -92,19 +67,19 @@ bool HttpRequest::parseRequestLine_(const std::string &line) {
     return false;
 }
 
-void HttpRequest::getReturnHtml_() {
-    if (path_ == "/") {  // default html
-        path_ = "/index.html";
-    } else if (method_ == "GET") {
-        if (GET_FUNC.count(path_)) path_ = GET_FUNC[path_](path_);
-        else path_ = "/404.html";
-    } else if (method_ == "POST") {
-        if (POST_FUNC.count(path_)) path_ = POST_FUNC[path_](post_);
-        else path_ = "/404.html";
-    } else {
-        path_ = "404.html";
-    }
-}
+//void HttpRequest::getReturnHtml_() {
+//    if (path_ == "/") {  // default html
+//        path_ = "/index.html";
+//    } else if (method_ == "GET") {
+//        if (GET_FUNC.count(path_)) path_ = GET_FUNC[path_](path_);
+//        else path_ = "/404.html";
+//    } else if (method_ == "POST") {
+//        if (POST_FUNC.count(path_)) path_ = POST_FUNC[path_](post_);
+//        else path_ = "/404.html";
+//    } else {
+//        path_ = "404.html";
+//    }
+//}
 
 void HttpRequest::parseHeaders_(const std::string &line) {
     std::regex patten("^([^:]*): ?(.*)$");
@@ -191,5 +166,9 @@ std::string HttpRequest::getPost(const char *key) const {
         return post_.find(key)->second;
     }
     return "";
+}
+
+std::unordered_map<std::string, std::string> &HttpRequest::post() {
+    return post_;
 }
 

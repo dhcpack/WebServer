@@ -31,17 +31,6 @@ public:
         FINISH,
     };
 
-    enum HTTP_CODE {
-        NO_REQUEST = 0,
-        GET_REQUEST,
-        BAD_REQUEST,
-        NO_RESOURSE,
-        FORBIDDENT_REQUEST,
-        FILE_REQUEST,
-        INTERNAL_ERROR,
-        CLOSED_CONNECTION,
-    };
-
     HttpRequest();
 
     ~HttpRequest() = default;
@@ -55,6 +44,8 @@ public:
     std::string method() const;
 
     std::string version() const;
+
+    std::unordered_map<std::string, std::string> &post();
 
     std::string getPost(const std::string &key) const;
 
@@ -73,12 +64,12 @@ private:
 
     void parsePost_();
 
-    void getReturnHtml_();
+//    void getReturnHtml_();
 
     /*
     TODO
-        void HttpConn::ParseFormData() {}
-        void HttpConn::ParseJson() {}
+        void HttpConnection::ParseFormData() {}
+        void HttpConnection::ParseJson() {}
     */
 
     void parseUrlencoded();
@@ -90,19 +81,6 @@ private:
     std::unordered_map<std::string, std::string> headers_;
     /*  请求体  */
     std::unordered_map<std::string, std::string> post_;
-
-
-    /*
-     * USER DEFINED FUNCS
-     * */
-    static bool userFuncsLoaded_;
-    /*  GET请求对应的视图函数  */
-    static std::unordered_map<std::string, std::function<std::string(std::string)>> GET_FUNC;
-    /*  POST请求对应的视图函数  */
-    static std::unordered_map<std::string,
-            std::function<std::string(std::unordered_map<std::string, std::string>)>> POST_FUNC;
-
-    static void loadUserFuncs();
 };
 
 #endif //WEBSERVER_HTTPREQUEST_H

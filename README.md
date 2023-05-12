@@ -12,7 +12,7 @@ create database webserver;
 
 use webserver;
 
-CREATE TABLE user(
+CREATED TABLE user(
     username char(50) NULL,
     password char(50) NULL
 )ENGINE=InnoDB;

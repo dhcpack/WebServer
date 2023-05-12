@@ -4,21 +4,43 @@
 
 #include "httpconnect.h"
 
-const char *HttpConn::srcDir;
-std::atomic<int> HttpConn::userCount;
-bool HttpConn::isET;
+/*
+ * 初始化类的静态变量
+ * */
+bool HttpConnection::userFuncsLoaded_ = false;
+/*  GET请求对应的视图函数  */
+std::unordered_map<std::string, std::function<ResponseMessage(std::string)>> HttpConnection::GET_FUNC{};
+/*  POST请求对应的视图函数  */
+std::unordered_map<std::string, std::function<ResponseMessage(
+        std::unordered_map<std::string, std::string>)>> HttpConnection::POST_FUNC{};
 
-HttpConn::HttpConn() {
+
+const char *HttpConnection::srcDir;
+std::atomic<int> HttpConnection::userCount;
+bool HttpConnection::isET;
+
+HttpConnection::HttpConnection() {
     fd_ = -1;
     addr_ = {0};
     isClose_ = true;
 };
 
-HttpConn::~HttpConn() {
+HttpConnection::~HttpConnection() {
     close();
 };
 
-void HttpConn::init(int fd, const sockaddr_in &addr) {
+void HttpConnection::loadUserFuncs_() {
+    // load GET_FUNC
+    GET_FUNC["/index"] = get_index, GET_FUNC["/welcome"] = get_welcome, GET_FUNC["/video"] = get_video;
+    GET_FUNC["/picture"] = get_picture, GET_FUNC["/register"] = get_register, GET_FUNC["/login"] = get_login;
+
+    // load POST_FUNC
+    POST_FUNC["/login"] = post_login, POST_FUNC["/register"] = post_register;
+    userFuncsLoaded_ = true;
+}
+
+void HttpConnection::init(int fd, const sockaddr_in &addr) {
+    if (!userFuncsLoaded_) loadUserFuncs_();
     assert(fd > 0);
     userCount++;
     addr_ = addr;
@@ -29,7 +51,7 @@ void HttpConn::init(int fd, const sockaddr_in &addr) {
     LOG_INFO("Client[%d](%s:%d) in, userCount:%d", fd_, getIp(), getPort(), (int) userCount);
 }
 
-void HttpConn::close() {
+void HttpConnection::close() {
     response_.unmapFile();
     if (isClose_ == false) {
         isClose_ = true;
@@ -39,23 +61,23 @@ void HttpConn::close() {
     }
 }
 
-int HttpConn::getFd() const {
+int HttpConnection::getFd() const {
     return fd_;
 };
 
-struct sockaddr_in HttpConn::getAddr() const {
+struct sockaddr_in HttpConnection::getAddr() const {
     return addr_;
 }
 
-const char *HttpConn::getIp() const {
+const char *HttpConnection::getIp() const {
     return inet_ntoa(addr_.sin_addr);
 }
 
-int HttpConn::getPort() const {
+int HttpConnection::getPort() const {
     return addr_.sin_port;
 }
 
-ssize_t HttpConn::read(int *saveErrno) {
+ssize_t HttpConnection::read(int *saveErrno) {
     ssize_t len = -1;
     do {
         len = readBuff_.ReadFd(fd_, saveErrno);
@@ -66,7 +88,7 @@ ssize_t HttpConn::read(int *saveErrno) {
     return len;
 }
 
-ssize_t HttpConn::write(int *saveErrno) {
+ssize_t HttpConnection::write(int *saveErrno) {
     ssize_t len = -1;
     do {
         len = writev(fd_, iov_, iovCnt_);
@@ -91,16 +113,30 @@ ssize_t HttpConn::write(int *saveErrno) {
     return len;
 }
 
-bool HttpConn::process() {
+ResponseMessage HttpConnection::getResponse_() {
+    if (request_.path() == "/") {  // default html
+        return {"/index.html", HTTP_STATUS_CODE::OK};
+    } else if (request_.method() == "GET") {
+        if (GET_FUNC.count(request_.path())) return GET_FUNC[request_.path()](request_.path());
+        else return {"/404.html", HTTP_STATUS_CODE::NOT_FOUND};
+    } else if (request_.method() == "POST") {
+        if (POST_FUNC.count(request_.path())) return POST_FUNC[request_.path()](request_.post());
+        else return {"/404.html", HTTP_STATUS_CODE::NOT_FOUND};
+    } else return {"/404.html", HTTP_STATUS_CODE::NOT_FOUND};
+}
+
+bool HttpConnection::process() {
     request_.clear();
     if (readBuff_.ReadableBytes() <= 0) {
         return false;
     } else if (request_.parse(readBuff_)) {
         LOG_DEBUG("%s", request_.path().c_str());
-        response_.init(srcDir, request_.path(), request_.isKeepAlive(), 200);
+        ResponseMessage responseMessage = getResponse_();
+        response_.init(srcDir, responseMessage.html_path_.value(), request_.isKeepAlive(), responseMessage.code_);
     } else {
-        response_.init(srcDir, request_.path(), false, 400);
+        response_.init(srcDir, request_.path(), false, HTTP_STATUS_CODE::BAD_REQUEST);
     }
+
 
     response_.makeResponse(writeBuff_);
     /* 响应头 */
