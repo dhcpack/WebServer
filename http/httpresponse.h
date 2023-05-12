@@ -10,9 +10,27 @@
 #include <unistd.h>      // close
 #include <sys/stat.h>    // stat
 #include <sys/mman.h>    // mmap, munmap
+#include <functional>
 
 #include "../buffer/buffer.h"
 #include "../log/log.h"
+#include "userfunctions.h"
+
+enum HTTP_STATUS_CODE {
+    OK = 200,
+    CREATED = 201,
+
+    BAD_REQUEST = 400,
+    FORBIDDEN = 403,
+    NOT_FOUND = 404,
+
+    INTERNAL_SERVER_ERROR = 500,
+};
+
+struct ResponseMessage {
+    std::optional<std::string> html_path_;
+    HTTP_STATUS_CODE code_;
+};
 
 class HttpResponse {
 public:
@@ -20,7 +38,8 @@ public:
 
     ~HttpResponse();
 
-    void init(const std::string &srcDir, std::string &path, bool isKeepAlive = false, int code = -1);
+    void init(const std::string &srcDir, bool isKeepAlive, bool isBadRequest, HTTP_METHOD method, std::string &path,
+              std::unordered_map<std::string, std::string> &post);
 
     void makeResponse(Buffer &buff);
 
@@ -41,22 +60,29 @@ private:
 
     void addContent_(Buffer &buff);
 
-    void errorHtml_();
-
     std::string getFileType_();
 
-    int code_;
+    HTTP_STATUS_CODE code_{};
     bool isKeepAlive_;
 
     std::string path_;
     std::string srcDir_;
 
     char *mmFile_;
-    struct stat mmFileStat_;
+    struct stat mmFileStat_{};
 
-    static const std::unordered_map<std::string, std::string> SUFFIX_TYPE;
-    static const std::unordered_map<int, std::string> CODE_STATUS;
-    static const std::unordered_map<int, std::string> CODE_PATH;
+    static const std::unordered_map<std::string, std::string> SUFFIX2MIME;
+    static const std::unordered_map<HTTP_STATUS_CODE, std::string> CODE2STATUS;
+
+    /*
+     * USER DEFINED FUNCS
+     * */
+
+    /*  GET请求对应的视图函数  */
+    static std::unordered_map<std::string, std::function<ResponseMessage(std::string)>> GET_FUNC;
+    /*  POST请求对应的视图函数  */
+    static std::unordered_map<std::string,
+            std::function<ResponseMessage(std::unordered_map<std::string, std::string>)>> POST_FUNC;
 };
 
 #endif //WEBSERVER_HTTPRESPONSE_H

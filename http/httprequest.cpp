@@ -67,20 +67,6 @@ bool HttpRequest::parseRequestLine_(const std::string &line) {
     return false;
 }
 
-//void HttpRequest::getReturnHtml_() {
-//    if (path_ == "/") {  // default html
-//        path_ = "/index.html";
-//    } else if (method_ == "GET") {
-//        if (GET_FUNC.count(path_)) path_ = GET_FUNC[path_](path_);
-//        else path_ = "/404.html";
-//    } else if (method_ == "POST") {
-//        if (POST_FUNC.count(path_)) path_ = POST_FUNC[path_](post_);
-//        else path_ = "/404.html";
-//    } else {
-//        path_ = "404.html";
-//    }
-//}
-
 void HttpRequest::parseHeaders_(const std::string &line) {
     std::regex patten("^([^:]*): ?(.*)$");
     std::smatch subMatch;
@@ -146,8 +132,11 @@ std::string &HttpRequest::path() {
     return path_;
 }
 
-std::string HttpRequest::method() const {
-    return method_;
+HTTP_METHOD HttpRequest::method() const {
+    if (method_ == "GET") return HTTP_METHOD::GET;
+    else if (method_ == "POST") return HTTP_METHOD::POST;
+    else if (method_ == "PUT") return HTTP_METHOD::PUT;
+    else if (method_ == "DELETE") return HTTP_METHOD::DELETE;
 }
 
 std::string HttpRequest::version() const {

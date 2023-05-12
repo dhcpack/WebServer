@@ -62,7 +62,7 @@ ResponseMessage post_register(const std::unordered_map<std::string, std::string>
     if (num_rows != 0) {
         LOG_DEBUG("User %s already exist.\n", username.c_str());
         mysql_free_result(res);
-        return {"/error.html", HTTP_STATUS_CODE::FORBIDDEN};
+        return {"/403.html", HTTP_STATUS_CODE::FORBIDDEN};
     }
 
     snprintf(query, 256, "insert into user(username, password) values('%s', '%s')", username.c_str(), password.c_str());
@@ -108,7 +108,7 @@ ResponseMessage post_login(const std::unordered_map<std::string, std::string> &p
     if (num_rows == 0) {
         LOG_DEBUG("User %s not found.\n", username.c_str());
         mysql_free_result(res);
-        return {"/error.html", HTTP_STATUS_CODE::NOT_FOUND};
+        return {"/404.html", HTTP_STATUS_CODE::NOT_FOUND};
     }
 
     // Get the user's information
@@ -123,6 +123,6 @@ ResponseMessage post_login(const std::unordered_map<std::string, std::string> &p
         return {"/welcome.html", HTTP_STATUS_CODE::OK};
     } else {
         LOG_DEBUG("Wrong password.\n");
-        return {"/error.html", HTTP_STATUS_CODE::FORBIDDEN};
+        return {"/403.html", HTTP_STATUS_CODE::FORBIDDEN};
     }
 }

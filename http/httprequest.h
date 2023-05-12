@@ -20,7 +20,11 @@
 
 #include "../buffer/buffer.h"
 #include "../log/log.h"
-#include "userfunctions.h"
+
+enum HTTP_METHOD {
+    NONE,
+    GET, POST, PUT, DELETE,
+};
 
 class HttpRequest {
 public:
@@ -41,7 +45,7 @@ public:
 
     std::string &path();
 
-    std::string method() const;
+    HTTP_METHOD method() const;
 
     std::string version() const;
 
@@ -63,8 +67,6 @@ private:
     void parseBody_(const std::string &line);
 
     void parsePost_();
-
-//    void getReturnHtml_();
 
     /*
     TODO

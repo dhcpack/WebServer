@@ -16,31 +16,6 @@
 #include "httprequest.h"
 #include "httpresponse.h"
 
-enum HTTP_STATUS_CODE {
-    OK = 200,
-    CREATED = 201,
-
-    BAD_REQUEST = 400,
-    FORBIDDEN = 403,
-    NOT_FOUND = 404,
-
-    INTERNAL_SERVER_ERROR = 500,
-
-    NO_REQUEST = 0,
-    GET_REQUEST,
-    BAD_REQUEST,
-    NO_RESOURSE,
-    FORBIDDENT_REQUEST,
-    FILE_REQUEST,
-    INTERNAL_ERROR,
-    CLOSED_CONNECTION,
-};
-
-struct ResponseMessage {
-    std::optional<std::string> html_path_;
-    HTTP_STATUS_CODE code_;
-};
-
 
 /*
  * Http Connection
@@ -77,6 +52,9 @@ public:
         return request_.isKeepAlive();
     }
 
+    /*
+     * 静态，定义HttpConnect共同的配置
+     * */
     static bool isET;
     static const char *srcDir;
     static std::atomic<int> userCount;
@@ -90,25 +68,14 @@ private:
     int iovCnt_;
     struct iovec iov_[2];
 
-    Buffer readBuff_; // 读缓冲区
-    Buffer writeBuff_; // 写缓冲区
+    /*
+     * 从读缓冲区读取request，将response写入写缓冲区中
+     * */
+    Buffer readBuff_;
+    Buffer writeBuff_;
 
     HttpRequest request_;
     HttpResponse response_;
-
-    /*
-     * USER DEFINED FUNCS
-     * */
-    static bool userFuncsLoaded_;
-    /*  GET请求对应的视图函数  */
-    static std::unordered_map<std::string, std::function<ResponseMessage(std::string)>> GET_FUNC;
-    /*  POST请求对应的视图函数  */
-    static std::unordered_map<std::string,
-            std::function<ResponseMessage(std::unordered_map<std::string, std::string>)>> POST_FUNC;
-
-    static void loadUserFuncs_();
-
-    ResponseMessage getResponse_();
 };
 
 #endif //WEBSERVER_HTTPCONNECT_H
