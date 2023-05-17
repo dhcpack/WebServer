@@ -31,8 +31,9 @@ public:
     uint32_t getEvents(size_t i) const;
 
 private:
+    // epoll文件描述符
     int epollFd_;
-
+    // epoll事件
     std::vector<struct epoll_event> events_;
 };
 
