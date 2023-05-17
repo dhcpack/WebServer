@@ -16,22 +16,6 @@
 #include "../log/log.h"
 #include "userfunctions.h"
 
-enum HTTP_STATUS_CODE {
-    OK = 200,
-    CREATED = 201,
-
-    BAD_REQUEST = 400,
-    FORBIDDEN = 403,
-    NOT_FOUND = 404,
-
-    INTERNAL_SERVER_ERROR = 500,
-};
-
-struct ResponseMessage {
-    std::optional<std::string> html_path_;
-    HTTP_STATUS_CODE code_;
-};
-
 class HttpResponse {
 public:
     HttpResponse();
@@ -77,7 +61,6 @@ private:
     /*
      * USER DEFINED FUNCS
      * */
-
     /*  GET请求对应的视图函数  */
     static std::unordered_map<std::string, std::function<ResponseMessage(std::string)>> GET_FUNC;
     /*  POST请求对应的视图函数  */

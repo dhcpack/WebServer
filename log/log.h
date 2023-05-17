@@ -36,11 +36,13 @@ public:
 
     static Log &instance();
 
-    void new_file(std::tm tm);
+    bool new_file(std::tm tm);
 
     void write_log(Level level, const char *format, ...);
 
     bool isOpen() const;
+
+    void flush();
 
     // For Singleton
     // 删除拷贝构造函数
@@ -76,7 +78,11 @@ private:
 template<typename... Args>
 void LOG_BASE(const Level level, const char *format, Args... args) {
     Log &log = Log::instance();
-    if (log.isOpen()) log.write_log(level, format, args...);
+    if (log.isOpen()) {
+        log.write_log(level, format, args...);
+        log.flush();
+    }
+
 }
 
 template<typename... Args>

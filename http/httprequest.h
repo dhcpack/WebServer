@@ -20,11 +20,7 @@
 
 #include "../buffer/buffer.h"
 #include "../log/log.h"
-
-enum HTTP_METHOD {
-    NONE,
-    GET, POST, PUT, DELETE,
-};
+#include "httputils.h"
 
 class HttpRequest {
 public:

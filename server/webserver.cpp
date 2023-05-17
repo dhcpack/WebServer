@@ -3,43 +3,37 @@
 //
 
 #include "webserver.h"
-
-
-#include "webserver.h"
-
-using namespace std;
+#include <iostream>
 
 WebServer::WebServer(
         int port, int trigMode, int timeoutMS, bool OptLinger,
-        int sqlPort, const char *sqlUser, const char *sqlPwd,
+        const char *sqlhost, int sqlPort, const char *sqlUser, const char *sqlPwd,
         const char *dbName, int connPoolNum, int threadNum,
-        bool openLog, int logLevel, int logQueSize) :
+        bool openLog, uint32_t logQueSize) :
         port_(port), openLinger_(OptLinger), timeoutMS_(timeoutMS), isClose_(false),
         timer_(new HeapTimer()), threadpool_(new ThreadPool(threadNum)), epoller_(new Epoller()) {
+    // 初始化日志
+    if (openLog)
+        if (!Log::instance().init(logQueSize)) exit(-1);
+    LOG_DEBUG("========== MySql init ==========\n");
+    // 初始化数据库
+    if (!MySqlPool::instance().init(sqlhost, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum)) {
+        LOG_FATAL("MySql Failed!\n");
+    }
+    LOG_DEBUG("========== MySql ok ==========\n");
+
     srcDir_ = getcwd(nullptr, 256);
     assert(srcDir_);
     strncat(srcDir_, "/resources/", 16);
     HttpConnection::userCount = 0;
     HttpConnection::srcDir = srcDir_;
-    MySqlPool::instance().init("localhost", sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
 
+    // 初始化触发模式
     initEventMode_(trigMode);
+    LOG_DEBUG("========== Socket init ==========\n");
+    // 初始化端口
     if (!initSocket_()) { isClose_ = true; }
-
-    if (openLog) {
-        Log::instance().init(logQueSize);
-        if (isClose_) { LOG_ERROR("========== Server init error!=========="); }
-        else {
-            LOG_INFO("========== Server init ==========");
-            LOG_INFO("Port:%d, OpenLinger: %s", port_, OptLinger ? "true" : "false");
-            LOG_INFO("Listen Mode: %s, OpenConn Mode: %s",
-                     (listenEvent_ & EPOLLET ? "ET" : "LT"),
-                     (connEvent_ & EPOLLET ? "ET" : "LT"));
-            LOG_INFO("LogSys level: %d", logLevel);
-            LOG_INFO("srcDir: %s", HttpConnection::srcDir);
-            LOG_INFO("SqlConnPool num: %d, ThreadPool num: %d", connPoolNum, threadNum);
-        }
-    }
+    LOG_DEBUG("========== Socket ok ==========\n");
 }
 
 WebServer::~WebServer() {
@@ -50,6 +44,8 @@ WebServer::~WebServer() {
 }
 
 void WebServer::initEventMode_(int trigMode) {
+    // EPOLLONESHOT: 一次触发
+    // EPOLLRDHUP: 监听或连接的对端关闭了连接
     listenEvent_ = EPOLLRDHUP;
     connEvent_ = EPOLLONESHOT | EPOLLRDHUP;
     switch (trigMode) {
@@ -75,7 +71,7 @@ void WebServer::initEventMode_(int trigMode) {
 
 void WebServer::start() {
     int timeMS = -1;  /* epoll wait timeout == -1 无事件将阻塞 */
-    if (!isClose_) { LOG_INFO("========== Server start =========="); }
+    if (!isClose_) { LOG_INFO("========== Server start ==========\n"); }
     while (!isClose_) {
         if (timeoutMS_ > 0) {
             timeMS = timer_->getNextTick();
@@ -107,14 +103,14 @@ void WebServer::sendError_(int fd, const char *info) {
     assert(fd > 0);
     int ret = send(fd, info, strlen(info), 0);
     if (ret < 0) {
-        LOG_WARN("send error to client[%d] error!", fd);
+        LOG_WARN("send error to client[%d] error!\n", fd);
     }
     close(fd);
 }
 
 void WebServer::closeConnection_(HttpConnection *client) {
     assert(client);
-    LOG_INFO("Client[%d] quit!", client->getFd());
+    LOG_INFO("Client[%d] quit!\n", client->getFd());
     epoller_->delFd(client->getFd());
     client->close();
 }
@@ -127,7 +123,7 @@ void WebServer::addClient_(int fd, sockaddr_in addr) {
     }
     epoller_->addFd(fd, EPOLLIN | connEvent_);
     setFdNonblock_(fd);
-    LOG_INFO("Client[%d] in!", users_[fd].getFd());
+    LOG_INFO("Client[%d] in!\n", users_[fd].getFd());
 }
 
 void WebServer::dealListen_() {
@@ -137,8 +133,8 @@ void WebServer::dealListen_() {
         int fd = accept(listenFd_, (struct sockaddr *) &addr, &len);
         if (fd <= 0) { return; }
         else if (HttpConnection::userCount >= MAX_FD) {
-            sendError_(fd, "Server busy!");
-            LOG_WARN("Clients is full!");
+            sendError_(fd, "Server busy!\n");
+            LOG_WARN("Clients is full!\n");
             return;
         }
         addClient_(fd, addr);
@@ -203,7 +199,7 @@ void WebServer::onWrite_(HttpConnection *client) {
     closeConnection_(client);
 }
 
-/* Create listenFd */
+// 监听端口
 bool WebServer::initSocket_() {
     int ret;
     struct sockaddr_in addr;

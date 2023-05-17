@@ -7,7 +7,6 @@
 /*
  * 初始化类的静态变量
  * */
-bool HttpResponse::userFuncsLoaded_ = false;
 /*  GET请求对应的视图函数  */
 std::unordered_map<std::string, std::function<ResponseMessage(std::string)>> HttpResponse::GET_FUNC{
         {"/index",    get_index},

@@ -137,6 +137,7 @@ HTTP_METHOD HttpRequest::method() const {
     else if (method_ == "POST") return HTTP_METHOD::POST;
     else if (method_ == "PUT") return HTTP_METHOD::PUT;
     else if (method_ == "DELETE") return HTTP_METHOD::DELETE;
+    else return HTTP_METHOD::NONE;
 }
 
 std::string HttpRequest::version() const {
