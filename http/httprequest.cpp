@@ -47,7 +47,6 @@ bool HttpRequest::parse(Buffer &buff) {
     std::string keepalive = isKeepAlive() ? "true" : "false";
     LOG_DEBUG("HttpRequest Parsed! Method: %s, Path: %s, Version: %s, KeepAlive: %s\n",
               method_.c_str(), path_.c_str(), version_.c_str(), keepalive.c_str());
-    LOG_INFO("%s %s %s %s", headers_["host"].c_str(), method_.c_str(), path_.c_str(), "80");
 //    getReturnHtml_();
 //    LOG_DEBUG("Result Html generated!\n");
     return true;
@@ -160,5 +159,13 @@ std::string HttpRequest::getPost(const char *key) const {
 
 std::unordered_map<std::string, std::string> &HttpRequest::post() {
     return post_;
+}
+
+std::string HttpRequest::getMethod() const {
+    return method_;
+}
+
+std::string HttpRequest::getHost() const {
+    return headers_.find("Host")->second;
 }
 

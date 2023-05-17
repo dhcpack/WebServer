@@ -34,7 +34,7 @@ bool Log::new_file(std::tm tm) {
              tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
     file_stream_ << "#Software: YL's Webserver version 1.0\n"
                     "#Date: " << log_date << "\n" <<
-                 "#Fields: date time client-ip client-method query-url server-port status response-size\n";
+                 "#Fields: date time [level] client-ip client-method query-url server-port status response-size\n";
     file_stream_.flush();
     return true;
 }

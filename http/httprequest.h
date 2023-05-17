@@ -51,6 +51,10 @@ public:
 
     std::string getPost(const char *key) const;
 
+    std::string getHost() const;
+
+    std::string getMethod() const;
+
     bool isKeepAlive() const;
 
     void clear();

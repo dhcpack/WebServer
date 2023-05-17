@@ -35,7 +35,7 @@ void HttpConnection::close() {
         isClose_ = true;
         userCount--;
         ::close(fd_);
-        LOG_INFO("Client[%d](%s:%d) quit, UserCount:%d", fd_, getIp(), getPort(), (int) userCount);
+        LOG_DEBUG("Client[%d](%s:%d) quit, UserCount:%d", fd_, getIp(), getPort(), (int) userCount);
     }
 }
 
@@ -113,6 +113,9 @@ bool HttpConnection::process() {
         iov_[1].iov_len = response_.fileLen();
         iovCnt_ = 2;
     }
-    LOG_DEBUG("filesize:%d, %d  to %d", response_.fileLen(), iovCnt_, toWriteBytes());
+    LOG_INFO("%s %s %s HTTP/%s %d %d\n", request_.getHost().c_str(), request_.getMethod().c_str(),
+             request_.path().c_str(), request_.version().c_str(), response_.code(), response_.fileLen());
+
+    LOG_DEBUG("filesize:%d, %d  to %d\n", response_.fileLen(), iovCnt_, toWriteBytes());
     return true;
 }

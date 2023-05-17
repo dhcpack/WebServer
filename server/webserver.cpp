@@ -18,7 +18,7 @@ WebServer::WebServer(
     LOG_DEBUG("========== MySql init ==========\n");
     // 初始化数据库
     if (!MySqlPool::instance().init(sqlhost, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum)) {
-        LOG_FATAL("MySql Failed!\n");
+        LOG_FATAL("========== MySql init Failed ==========\n");
     }
     LOG_DEBUG("========== MySql ok ==========\n");
 
@@ -32,7 +32,10 @@ WebServer::WebServer(
     initEventMode_(trigMode);
     LOG_DEBUG("========== Socket init ==========\n");
     // 初始化端口
-    if (!initSocket_()) { isClose_ = true; }
+    if (!initSocket_()) {
+        isClose_ = true;
+        LOG_FATAL("========== Socket init Failed ==========\n");
+    }
     LOG_DEBUG("========== Socket ok ==========\n");
 }
 
@@ -67,6 +70,71 @@ void WebServer::initEventMode_(int trigMode) {
             break;
     }
     HttpConnection::isET = (connEvent_ & EPOLLET);
+}
+
+// 监听端口
+bool WebServer::initSocket_() {
+    int ret;
+    struct sockaddr_in addr;
+    if (port_ > 65535 || port_ < 1024) {
+        LOG_FATAL("Port:[%d] is invalid!\n", port_);
+        return false;
+    }
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr.sin_port = htons(port_);
+    struct linger optLinger = {0};
+    if (openLinger_) {
+        /* 优雅关闭: 直到所剩数据发送完毕或超时 */
+        optLinger.l_onoff = 1;
+        optLinger.l_linger = 1;
+    }
+
+    listenFd_ = socket(AF_INET, SOCK_STREAM, 0);
+    if (listenFd_ < 0) {
+        LOG_FATAL("Create socket error!\n", port_);
+        return false;
+    }
+
+    ret = setsockopt(listenFd_, SOL_SOCKET, SO_LINGER, &optLinger, sizeof(optLinger));
+    if (ret < 0) {
+        close(listenFd_);
+        LOG_FATAL("Init linger error!\n", port_);
+        return false;
+    }
+
+    int optval = 1;
+    /* 端口复用 */
+    /* 只有最后一个套接字会正常接收数据。 */
+    ret = setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval, sizeof(int));
+    if (ret == -1) {
+        LOG_FATAL("set socket setsockopt error!\n");
+        close(listenFd_);
+        return false;
+    }
+
+    ret = bind(listenFd_, (struct sockaddr *) &addr, sizeof(addr));
+    if (ret < 0) {
+        LOG_FATAL("Bind Port:[%d] error!\n", port_);
+        close(listenFd_);
+        return false;
+    }
+
+    ret = listen(listenFd_, 6);
+    if (ret < 0) {
+        LOG_FATAL("Listen port:[%d] error!\n", port_);
+        close(listenFd_);
+        return false;
+    }
+    ret = epoller_->addFd(listenFd_, listenEvent_ | EPOLLIN);
+    if (ret == 0) {
+        LOG_FATAL("Add listen error!\n");
+        close(listenFd_);
+        return false;
+    }
+    setFdNonblock_(listenFd_);
+    LOG_DEBUG("Server port:[%d]\n", port_);
+    return true;
 }
 
 void WebServer::start() {
@@ -197,71 +265,6 @@ void WebServer::onWrite_(HttpConnection *client) {
         }
     }
     closeConnection_(client);
-}
-
-// 监听端口
-bool WebServer::initSocket_() {
-    int ret;
-    struct sockaddr_in addr;
-    if (port_ > 65535 || port_ < 1024) {
-        LOG_ERROR("Port:%d error!", port_);
-        return false;
-    }
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr.sin_port = htons(port_);
-    struct linger optLinger = {0};
-    if (openLinger_) {
-        /* 优雅关闭: 直到所剩数据发送完毕或超时 */
-        optLinger.l_onoff = 1;
-        optLinger.l_linger = 1;
-    }
-
-    listenFd_ = socket(AF_INET, SOCK_STREAM, 0);
-    if (listenFd_ < 0) {
-        LOG_ERROR("Create socket error!", port_);
-        return false;
-    }
-
-    ret = setsockopt(listenFd_, SOL_SOCKET, SO_LINGER, &optLinger, sizeof(optLinger));
-    if (ret < 0) {
-        close(listenFd_);
-        LOG_ERROR("Init linger error!", port_);
-        return false;
-    }
-
-    int optval = 1;
-    /* 端口复用 */
-    /* 只有最后一个套接字会正常接收数据。 */
-    ret = setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval, sizeof(int));
-    if (ret == -1) {
-        LOG_ERROR("set socket setsockopt error !");
-        close(listenFd_);
-        return false;
-    }
-
-    ret = bind(listenFd_, (struct sockaddr *) &addr, sizeof(addr));
-    if (ret < 0) {
-        LOG_ERROR("Bind Port:%d error!", port_);
-        close(listenFd_);
-        return false;
-    }
-
-    ret = listen(listenFd_, 6);
-    if (ret < 0) {
-        LOG_ERROR("Listen port:%d error!", port_);
-        close(listenFd_);
-        return false;
-    }
-    ret = epoller_->addFd(listenFd_, listenEvent_ | EPOLLIN);
-    if (ret == 0) {
-        LOG_ERROR("Add listen error!");
-        close(listenFd_);
-        return false;
-    }
-    setFdNonblock_(listenFd_);
-    LOG_INFO("Server port:%d", port_);
-    return true;
 }
 
 int WebServer::setFdNonblock_(int fd) {
