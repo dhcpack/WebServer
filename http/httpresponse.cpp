@@ -45,7 +45,7 @@ const std::unordered_map<std::string, std::string> HttpResponse::SUFFIX2MIME = {
         {".tar",   "application/x-tar"},
         {".css",   "text/css "},
         {".js",    "text/javascript "},
-        {".mp4",   "video/mp4"},
+//        {".mp4",   "video/mp4"},
         {".ico",   "image/x-icon"},
 };
 

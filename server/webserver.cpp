@@ -9,16 +9,22 @@ WebServer::WebServer(
         int port, int trigMode, int timeoutMS, bool OptLinger,
         const char *sqlhost, int sqlPort, const char *sqlUser, const char *sqlPwd,
         const char *dbName, int connPoolNum, int threadNum,
-        bool openLog, uint32_t logQueSize) :
+        bool openLog, uint32_t logQueSize, bool debugLog) :
         port_(port), openLinger_(OptLinger), timeoutMS_(timeoutMS), isClose_(false),
         timer_(new HeapTimer()), threadpool_(new ThreadPool(threadNum)), epoller_(new Epoller()) {
     // 初始化日志
-    if (openLog)
-        if (!Log::instance().init(logQueSize)) exit(-1);
+    if (openLog) {
+        if (!Log::instance().init(logQueSize)) {
+            started_ = false, error_ = "========== Log init Failed ==========";
+            return;
+        }
+        Log::debugLog = debugLog;
+    }
     LOG_DEBUG("========== MySql init ==========\n");
     // 初始化数据库
     if (!MySqlPool::instance().init(sqlhost, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum)) {
-        LOG_FATAL("========== MySql init Failed ==========\n");
+        started_ = false, error_ = "========== MySql init Failed ==========";
+        return;
     }
     LOG_DEBUG("========== MySql ok ==========\n");
 
@@ -32,9 +38,10 @@ WebServer::WebServer(
     initEventMode_(trigMode);
     LOG_DEBUG("========== Socket init ==========\n");
     // 初始化端口
-    if (!initSocket_()) {
+    if (!initSocket_(threadNum)) {
         isClose_ = true;
-        LOG_FATAL("========== Socket init Failed ==========\n");
+        started_ = false, error_ = "========== Socket init Failed ==========";
+        return;
     }
     LOG_DEBUG("========== Socket ok ==========\n");
 }
@@ -49,8 +56,8 @@ WebServer::~WebServer() {
 void WebServer::initEventMode_(int trigMode) {
     // EPOLLONESHOT: 一次触发
     // EPOLLRDHUP: 监听或连接的对端关闭了连接
-    listenEvent_ = EPOLLRDHUP;
-    connEvent_ = EPOLLONESHOT | EPOLLRDHUP;
+    listenEvent_ = EPOLLRDHUP;  // 监听事件配置
+    connEvent_ = EPOLLONESHOT | EPOLLRDHUP;  // 连接事件配置
     switch (trigMode) {
         case 0:
             break;
@@ -72,8 +79,8 @@ void WebServer::initEventMode_(int trigMode) {
     HttpConnection::isET = (connEvent_ & EPOLLET);
 }
 
-// 监听端口
-bool WebServer::initSocket_() {
+// 初始化监听套接字
+bool WebServer::initSocket_(u_int32_t threadNum) {
     int ret;
     struct sockaddr_in addr;
     if (port_ > 65535 || port_ < 1024) {
@@ -90,29 +97,31 @@ bool WebServer::initSocket_() {
         optLinger.l_linger = 1;
     }
 
+    // 创建套接字
     listenFd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (listenFd_ < 0) {
         LOG_FATAL("Create socket error!\n", port_);
         return false;
     }
 
+    // 设置套接字的SO_LINGER选项，启动优雅关闭
     ret = setsockopt(listenFd_, SOL_SOCKET, SO_LINGER, &optLinger, sizeof(optLinger));
     if (ret < 0) {
         close(listenFd_);
-        LOG_FATAL("Init linger error!\n", port_);
+        LOG_FATAL("SO_LINGER set error!\n", port_);
         return false;
     }
 
     int optval = 1;
-    /* 端口复用 */
-    /* 只有最后一个套接字会正常接收数据。 */
+    // 设置套接字的地址重用选项(SO_REUSEADDR)，启动地址重用
     ret = setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval, sizeof(int));
     if (ret == -1) {
-        LOG_FATAL("set socket setsockopt error!\n");
+        LOG_FATAL("SO_REUSEADDR set error!\n");
         close(listenFd_);
         return false;
     }
 
+    // 绑定套接字到端口
     ret = bind(listenFd_, (struct sockaddr *) &addr, sizeof(addr));
     if (ret < 0) {
         LOG_FATAL("Bind Port:[%d] error!\n", port_);
@@ -120,18 +129,23 @@ bool WebServer::initSocket_() {
         return false;
     }
 
-    ret = listen(listenFd_, 6);
+    // 监听套接字
+    ret = listen(listenFd_, threadNum);
     if (ret < 0) {
         LOG_FATAL("Listen port:[%d] error!\n", port_);
         close(listenFd_);
         return false;
     }
+
+    // 在epoller中监听
     ret = epoller_->addFd(listenFd_, listenEvent_ | EPOLLIN);
     if (ret == 0) {
-        LOG_FATAL("Add listen error!\n");
+        LOG_FATAL("Add listen fd error!\n");
         close(listenFd_);
         return false;
     }
+
+    // 设置套接字为非阻塞式
     setFdNonblock_(listenFd_);
     LOG_DEBUG("Server port:[%d]\n", port_);
     return true;
@@ -149,19 +163,19 @@ void WebServer::start() {
             /* 处理事件 */
             int fd = epoller_->getEventFd(i);
             uint32_t events = epoller_->getEvents(i);
-            if (fd == listenFd_) {
+            if (fd == listenFd_) {  // 新的连接请求：时间描述符是监听的socket
                 dealListen_();
-            } else if (events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
+            } else if (events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {  // 连接异常，关闭连接
                 assert(users_.count(fd) > 0);
                 closeConnection_(&users_[fd]);
-            } else if (events & EPOLLIN) {
+            } else if (events & EPOLLIN) {  // 有数据可读
                 assert(users_.count(fd) > 0);
                 dealRead_(&users_[fd]);
-            } else if (events & EPOLLOUT) {
+            } else if (events & EPOLLOUT) {  // 有数据可写
                 assert(users_.count(fd) > 0);
                 dealWrite_(&users_[fd]);
             } else {
-                LOG_ERROR("Unexpected event");
+                LOG_ERROR("Unexpected event!\n");
             }
         }
     }
@@ -176,13 +190,14 @@ void WebServer::sendError_(int fd, const char *info) {
     close(fd);
 }
 
+// 关闭连接
 void WebServer::closeConnection_(HttpConnection *client) {
     assert(client);
-    LOG_INFO("Client[%d] quit!\n", client->getFd());
     epoller_->delFd(client->getFd());
     client->close();
 }
 
+// 添加连接
 void WebServer::addClient_(int fd, sockaddr_in addr) {
     assert(fd > 0);
     users_[fd].init(fd, addr);
@@ -190,8 +205,7 @@ void WebServer::addClient_(int fd, sockaddr_in addr) {
         timer_->push(fd, timeoutMS_, std::bind(&WebServer::closeConnection_, this, &users_[fd]));
     }
     epoller_->addFd(fd, EPOLLIN | connEvent_);
-    setFdNonblock_(fd);
-    LOG_INFO("Client[%d] in!\n", users_[fd].getFd());
+    setFdNonblock_(fd);  // 非阻塞
 }
 
 void WebServer::dealListen_() {
@@ -239,9 +253,9 @@ void WebServer::onRead_(HttpConnection *client) {
 }
 
 void WebServer::onProcess_(HttpConnection *client) {
-    if (client->process()) {
+    if (client->process()) {  // 返回信息已生成--注册到写事件，下次检查时间是否可写 EPOLLOUT 写事件，想要向客户端发回数据
         epoller_->modFd(client->getFd(), connEvent_ | EPOLLOUT);
-    } else {
+    } else {  // 注册到读事件，下次检查时间是否可读 EPOLLIN 读事件
         epoller_->modFd(client->getFd(), connEvent_ | EPOLLIN);
     }
 }
@@ -272,34 +286,10 @@ int WebServer::setFdNonblock_(int fd) {
     return fcntl(fd, F_SETFL, fcntl(fd, F_GETFD, 0) | O_NONBLOCK);
 }
 
-
-//int serve() {
-//    Log &log = Log::instance();
-//    if (!log.init()) return -1;
-//
-//    LOG_DEBUG("Initializing MysqlPool ...\n");
-//    MySqlPool &mySqlPool = MySqlPool::instance();
-//    if (mySqlPool.init("127.0.0.1", 3306, "ws", "123456", "webserver", 10)) {
-//        LOG_DEBUG("MySqlPool initialize succeed!\n");
-//    } else {
-//        LOG_FATAL("MySqlPool initialize failed!\n");
-//        return -2;
-//    }
-//
-//    std::unordered_map<std::string, std::string> userinfo;
-//    userinfo["username"] = "ylhappy";
-//    userinfo["password"] = "123456";
-//    std::string log_info = post_login(userinfo);
-//    std::cout << log_info << std::endl;
-//    log_info = post_register(userinfo);
-//    std::cout << log_info << std::endl;
-//    userinfo["username"] = "yl";
-//    log_info = post_register(userinfo);
-//    std::cout << log_info << std::endl;
-///*
-// * httpRequest NOT tested
-// * */
-//// HttpRequest httpRequest;
-//// httpRequest.parse()
-//    return 0;
-//}
+bool WebServer::hasError(std::string &error) {
+    if (started_) return false;
+    else {
+        error = error_;
+        return true;
+    }
+}

@@ -3,6 +3,8 @@
 //
 #include "log.h"
 
+bool Log::debugLog = false;
+
 Log::~Log() {
     if (writeThread_ && writeThread_->joinable()) {
         while (!blockQueue_->empty()) {

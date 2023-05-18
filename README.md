@@ -12,7 +12,7 @@ create database webserver;
 
 use webserver;
 
-CREATED TABLE user(
+CREATE TABLE user(
     username char(50) NULL,
     password char(50) NULL
 )ENGINE=InnoDB;
@@ -64,3 +64,10 @@ poll系统调用和select类似，也是在指定时间内轮询一定数量的�
 epoll是Linux特有的I/O复用函数。它在实现和使用上与select、poll有很大差异。首先，epoll使用一组函数来完成任务，而不是单个函数。其次，epoll把用户关心的文件描述符上的事件放在内核里的一个事件表中，从而无须像select和poll那样每次调用都要重复传入文件描述符集或事件集。但epoll需要使用一个额外的文件描述符，来唯一标识内核中的这个事件表。这个文件描述符使用epoll create函数来创建。
 
 epoll对文件描述符的操作有两种模式：LT(Level Trigger,电平触发)模式和ET(EdgeTrigger,边沿触发)模式。LT模式是默认的工作模式，这种模式下epoll相当于一个效率较高的poll。当往epoll内核事件表中注册一个文件描述符上的EPOLLET事件时，epoll将以ET模式来操作该文件描述符。ET模式是epoll的高效工作模式。
+
+
+### pressure test
+```bash
+#./webbench -c 1005 -t 5 http://43.143.166.142:1314/speed.html
+ab -n 100000 -c 1000 http://43.143.166.142:1314/speed.html
+```

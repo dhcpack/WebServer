@@ -19,14 +19,16 @@ public:
             int port, int trigMode, int timeoutMS, bool OptLinger,
             const char *sqlhost, int sqlPort, const char *sqlUser, const char *sqlPwd,
             const char *dbName, int connPoolNum, int threadNum,
-            bool openLog, uint32_t logQueSize);
+            bool openLog, uint32_t logQueSize, bool debugLog);
 
     ~WebServer();
+
+    bool hasError(std::string &error);
 
     void start();
 
 private:
-    bool initSocket_();
+    bool initSocket_(uint32_t threadNum);
 
     void initEventMode_(int trigMode);
 
@@ -60,6 +62,8 @@ private:
     bool isClose_;
     int listenFd_;
     char *srcDir_;
+    std::string error_;
+    bool started_;
 
     uint32_t listenEvent_;
     uint32_t connEvent_;

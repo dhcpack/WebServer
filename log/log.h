@@ -51,6 +51,8 @@ public:
     // 删除拷贝赋值函数
     Log operator=(const Log &) = delete;
 
+    static bool debugLog;
+
 
 private:
     void async_write_log();
@@ -87,7 +89,8 @@ void LOG_BASE(const Level level, const char *format, Args... args) {
 
 template<typename... Args>
 void LOG_DEBUG(const char *format, Args... args) {
-    LOG_BASE(Level::DEBUG, format, args...);
+    if (Log::debugLog)
+        LOG_BASE(Level::DEBUG, format, args...);
 }
 
 template<typename... Args>
