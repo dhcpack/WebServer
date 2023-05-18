@@ -34,6 +34,9 @@ ResponseMessage get_login(const std::string &url) {
  * [POST] USER DEFINED FUNCS
  * */
 ResponseMessage post_register(const std::unordered_map<std::string, std::string> &post) {
+    if (!post.count("username") || !post.count("password")) {
+        return {"/error.html", HTTP_STATUS_CODE::INTERNAL_SERVER_ERROR};
+    }
     const std::string &username = post.find("username")->second, &password = post.find("password")->second;
     LOG_DEBUG("Register with username = %s, password = %s\n", username.c_str(), password.c_str());
     MYSQL *sql;
@@ -80,6 +83,9 @@ ResponseMessage post_register(const std::unordered_map<std::string, std::string>
 }
 
 ResponseMessage post_login(const std::unordered_map<std::string, std::string> &post) {
+    if (!post.count("username") || !post.count("password")) {
+        return {"/error.html", HTTP_STATUS_CODE::INTERNAL_SERVER_ERROR};
+    }
     const std::string &username = post.find("username")->second, &password = post.find("password")->second;
     LOG_DEBUG("Login with username = %s, password = %s\n", username.c_str(), password.c_str());
     MYSQL *sql;

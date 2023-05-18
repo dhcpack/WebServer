@@ -41,14 +41,13 @@ bool HttpRequest::parse(Buffer &buff) {
             default:
                 break;
         }
+        if (lineEnd == buff.BeginWriteConst()) buff.RetrieveUntil(lineEnd);
+        else buff.RetrieveUntil(lineEnd + 2);
         if (lineEnd == buff.BeginWrite()) break;
-        buff.RetrieveUntil(lineEnd + 2);
     }
     std::string keepalive = isKeepAlive() ? "true" : "false";
     LOG_DEBUG("HttpRequest Parsed! Method: %s, Path: %s, Version: %s, KeepAlive: %s\n",
               method_.c_str(), path_.c_str(), version_.c_str(), keepalive.c_str());
-//    getReturnHtml_();
-//    LOG_DEBUG("Result Html generated!\n");
     return true;
 }
 
@@ -62,7 +61,7 @@ bool HttpRequest::parseRequestLine_(const std::string &line) {
         state_ = HEADERS;
         return true;
     }
-    LOG_ERROR("RequestLine Parse Error! (Request Line: \"%s\")", line.c_str());
+    LOG_ERROR("RequestLine Parse Error! (Request Line: \"%s\")\n", line.c_str());
     return false;
 }
 
