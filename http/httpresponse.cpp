@@ -45,7 +45,7 @@ const std::unordered_map<std::string, std::string> HttpResponse::SUFFIX2MIME = {
         {".tar",   "application/x-tar"},
         {".css",   "text/css "},
         {".js",    "text/javascript "},
-//        {".mp4",   "video/mp4"},
+        {".mp4",   "video/mp4"},
         {".ico",   "image/x-icon"},
 };
 
@@ -125,7 +125,7 @@ void HttpResponse::addHeader_(Buffer &buff) {
         buff.Append("keep-alive\r\n");
         buff.Append("keep-alive: max=6, timeout=120\r\n");
     } else {
-        buff.Append("close\r\n");
+        buff.Append("close_\r\n");
     }
     buff.Append("Content-type: " + getFileType_() + "\r\n");
 }
@@ -174,6 +174,7 @@ void HttpResponse::errorContent(Buffer &buff, const std::string &message) {
     std::string body;
     std::string status;
     body += "<html><title>Error</title>";
+    body += R"(<head><link rel="icon" href="images/favicon.ico"></head>)";
     body += "<body bgcolor=\"ffffff\">";
     if (CODE2STATUS.count(code_) == 1) {
         status = CODE2STATUS.find(code_)->second;

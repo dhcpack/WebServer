@@ -69,7 +69,7 @@ void HeapTimer::doWork(u_int id) {
 
 // 删除指定位置的节点
 void HeapTimer::del_(size_t index) {
-    id2heap_.erase(heap_[index].id);
+    u_int id = heap_[index].id;
 
     if (index < heap_.size()) {  // 不是堆尾，交换到堆尾，删除并调整
         swapNode(index, heap_.size() - 1);
@@ -78,6 +78,8 @@ void HeapTimer::del_(size_t index) {
     } else {  // 是堆尾，直接删除
         heap_.pop_back();
     }
+
+    id2heap_.erase(id);
 }
 
 // 调整指定id的节点

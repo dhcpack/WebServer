@@ -15,7 +15,7 @@ HttpConnection::HttpConnection() {
 };
 
 HttpConnection::~HttpConnection() {
-    close();
+    close_();
 };
 
 void HttpConnection::init(int fd, const sockaddr_in &addr) {
@@ -29,12 +29,12 @@ void HttpConnection::init(int fd, const sockaddr_in &addr) {
     LOG_DEBUG("Client[%d](%s:%d) connected, userCount:%d\n", fd_, getIp(), getPort(), (int) userCount);
 }
 
-void HttpConnection::close() {
+void HttpConnection::close_() {
     response_.unmapFile();
     if (!isClose_) {
         isClose_ = true;
         userCount--;
-        ::close(fd_);
+        close(fd_);
         LOG_DEBUG("Client[%d](%s:%d) quit, UserCount:%d\n", fd_, getIp(), getPort(), (int) userCount);
     }
 }
@@ -113,10 +113,11 @@ bool HttpConnection::process() {
         iov_[1].iov_len = response_.fileLen();
         iovCnt_ = 2;
     }
-    if (parseResult)
-        LOG_INFO("%s %s %s HTTP/%s %d %d\n", request_.getHost().c_str(), request_.getMethod().c_str(),
+    if (parseResult) {
+        LOG_INFO("%s:%d %s %s HTTP/%s %d %d\n", getIp(), getPort(), request_.getMethod().c_str(),
                  request_.path().c_str(), request_.version().c_str(), response_.code(),
                  iovCnt_ == 2 ? iov_[0].iov_len + iov_[1].iov_len : iov_[0].iov_len);
+    }
 
     LOG_DEBUG("filesize:%d, %d  to %d\n", response_.fileLen(), iovCnt_, toWriteBytes());
     return true;

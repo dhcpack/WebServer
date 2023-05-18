@@ -7,7 +7,7 @@
 
 #include <unordered_map>
 #include <fcntl.h>       // open
-#include <unistd.h>      // close
+#include <unistd.h>      // close_
 #include <sys/stat.h>    // stat
 #include <sys/mman.h>    // mmap, munmap
 #include <functional>

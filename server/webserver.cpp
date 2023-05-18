@@ -194,7 +194,7 @@ void WebServer::sendError_(int fd, const char *info) {
 void WebServer::closeConnection_(HttpConnection *client) {
     assert(client);
     epoller_->delFd(client->getFd());
-    client->close();
+    client->close_();
 }
 
 // 添加连接

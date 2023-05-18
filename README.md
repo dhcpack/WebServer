@@ -69,5 +69,5 @@ epoll对文件描述符的操作有两种模式：LT(Level Trigger,电平触发)
 ### pressure test
 ```bash
 #./webbench -c 1005 -t 5 http://43.143.166.142:1314/speed.html
-ab -n 100000 -c 1000 http://43.143.166.142:1314/speed.html
+ab -n 10000 -c 1000 http://43.143.166.142:1314/speed.html
 ```
