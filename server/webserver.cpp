@@ -24,7 +24,7 @@ WebServer::WebServer(
 
     srcDir_ = getcwd(nullptr, 256);
     assert(srcDir_);
-    strncat(srcDir_, "/resources/", 16);
+    strncat(srcDir_, "/../resources", 16);  // For clion
     HttpConnection::userCount = 0;
     HttpConnection::srcDir = srcDir_;
 

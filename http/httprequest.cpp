@@ -118,7 +118,7 @@ void HttpRequest::parseUrlencoded() {
                 }
             }
             post_[key] = value;
-            LOG_DEBUG("Parse application/x-www-form-urlencoded:: (%s: %s)", key.c_str(), value.c_str());
+            LOG_DEBUG("Parse application/x-www-form-urlencoded:: (%s: %s)\n", key.c_str(), value.c_str());
         }
     }
 }

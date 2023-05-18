@@ -45,6 +45,8 @@ const std::unordered_map<std::string, std::string> HttpResponse::SUFFIX2MIME = {
         {".tar",   "application/x-tar"},
         {".css",   "text/css "},
         {".js",    "text/javascript "},
+        {".mp4",   "video/mp4"},
+        {".ico",   "image/x-icon"},
 };
 
 const std::unordered_map<HTTP_STATUS_CODE, std::string> HttpResponse::CODE2STATUS = {
@@ -83,7 +85,7 @@ void HttpResponse::init(const std::string &srcDir, bool isKeepAlive, bool isBadR
         if (GET_FUNC.count(path)) {
             ResponseMessage getResponse = GET_FUNC[path](path);
             path_ = getResponse.html_path_.value(), code_ = getResponse.code_;
-        } else path_ = "/404.html", code_ = HTTP_STATUS_CODE::NOT_FOUND;
+        } else path_ = path, code_ = HTTP_STATUS_CODE::OK;
     } else if (method == HTTP_METHOD::POST) {
         if (POST_FUNC.count(path)) {
             ResponseMessage postResponse = POST_FUNC[path](post);
@@ -95,9 +97,9 @@ void HttpResponse::init(const std::string &srcDir, bool isKeepAlive, bool isBadR
 void HttpResponse::makeResponse(Buffer &buff) {
     // 判断请求的文件是否存在
     if (stat((srcDir_ + path_).data(), &mmFileStat_) < 0 || S_ISDIR(mmFileStat_.st_mode)) {  // 请求的文件不存在或是目录
-        code_ = HTTP_STATUS_CODE::NOT_FOUND;
+        code_ = HTTP_STATUS_CODE::NOT_FOUND, path_ = "/404.html";
     } else if (!(mmFileStat_.st_mode & S_IROTH)) {  // 请求的文件没有可读权限
-        code_ = HTTP_STATUS_CODE::FORBIDDEN;
+        code_ = HTTP_STATUS_CODE::FORBIDDEN, path_ = "/403.html";
     }
     addStateLine_(buff);
     addHeader_(buff);
@@ -137,9 +139,9 @@ void HttpResponse::addContent_(Buffer &buff) {
 
     /* 将文件映射到内存提高文件的访问速度
         MAP_PRIVATE 建立一个写入时拷贝的私有映射*/
-    LOG_DEBUG("file path %s", (srcDir_ + path_).data());
-    int *mmRet = (int *) mmap(0, mmFileStat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
-    if (*mmRet == -1) {
+    LOG_DEBUG("file path %s\n", (srcDir_ + path_).data());
+    void *mmRet = mmap(0, mmFileStat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
+    if (mmRet == MAP_FAILED) {
         errorContent(buff, "file NotFound!");
         return;
     }
@@ -168,7 +170,7 @@ std::string HttpResponse::getFileType_() {
     return "text/plain";
 }
 
-void HttpResponse::errorContent(Buffer &buff, std::string message) {
+void HttpResponse::errorContent(Buffer &buff, const std::string &message) {
     std::string body;
     std::string status;
     body += "<html><title>Error</title>";
@@ -180,7 +182,7 @@ void HttpResponse::errorContent(Buffer &buff, std::string message) {
     }
     body += std::to_string(code_) + " : " + status + "\n";
     body += "<p>" + message + "</p>";
-    body += "<hr><em>TinyWebServer</em></body></html>";
+    body += "<hr><em>Yuelin's WebServer</em></body></html>";
 
     buff.Append("Content-length: " + std::to_string(body.size()) + "\r\n\r\n");
     buff.Append(body);

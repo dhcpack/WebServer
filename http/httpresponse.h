@@ -33,7 +33,7 @@ public:
 
     size_t fileLen() const;
 
-    void errorContent(Buffer &buff, std::string message);
+    void errorContent(Buffer &buff, const std::string& message);
 
     int code() const { return code_; }
 

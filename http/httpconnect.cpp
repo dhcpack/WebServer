@@ -97,7 +97,7 @@ bool HttpConnection::process() {
 
     // Parse request
     bool parseResult = request_.parse(readBuff_);
-    response_.init(srcDir, request_.isKeepAlive(), parseResult, request_.method(), request_.path(), request_.post());
+    response_.init(srcDir, request_.isKeepAlive(), !parseResult, request_.method(), request_.path(), request_.post());
 
     // Make response
     response_.makeResponse(writeBuff_);
@@ -113,8 +113,10 @@ bool HttpConnection::process() {
         iov_[1].iov_len = response_.fileLen();
         iovCnt_ = 2;
     }
-    LOG_INFO("%s %s %s HTTP/%s %d %d\n", request_.getHost().c_str(), request_.getMethod().c_str(),
-             request_.path().c_str(), request_.version().c_str(), response_.code(), response_.fileLen());
+    if (parseResult)
+        LOG_INFO("%s %s %s HTTP/%s %d %d\n", request_.getHost().c_str(), request_.getMethod().c_str(),
+                 request_.path().c_str(), request_.version().c_str(), response_.code(),
+                 iov_[0].iov_len + iov_[1].iov_len);
 
     LOG_DEBUG("filesize:%d, %d  to %d\n", response_.fileLen(), iovCnt_, toWriteBytes());
     return true;
