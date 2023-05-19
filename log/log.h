@@ -22,6 +22,7 @@
 
 #include "blockqueue.h"
 #include "../buffer/buffer.h"
+#include "../config/config.h"
 
 enum class Level {
     DEBUG, INFO, WARN, ERROR, FATAL
@@ -62,7 +63,7 @@ private:
 
     ~Log();
 
-    static const uint64_t MAX_FILE_LINE = 50000;
+    static const uint64_t MAX_FILE_LINE = Config::maxLogLine;
     static const uint64_t MAX_LOG_NAME_LEN = 128;
 
     bool isOpen_ = false;

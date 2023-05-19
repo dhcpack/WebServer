@@ -53,7 +53,6 @@ MYSQL *MySqlPool::getConn() {
                 return nullptr;
             }
             LOG_DEBUG("MySql Reconnection!\n");
-            std::cout << "超时重连" << std::endl;
         }
     }
     return sql;

@@ -114,8 +114,11 @@ bool HttpConnection::process() {
         iovCnt_ = 2;
     }
     if (parseResult) {
-        LOG_INFO("%s:%d %s %s HTTP/%s %d %d\n", getIp(), getPort(), request_.getMethod().c_str(),
-                 request_.path().c_str(), request_.version().c_str(), response_.code(),
+        int cnt = (int) (std::log(getPort()) / std::log(10));
+        std::string align(5 - cnt, ' ');
+
+        LOG_INFO("%s:%d%s %s %s HTTP/%s %d %d\n", getIp(), getPort(), align.c_str(),
+                 request_.getMethod().c_str(), request_.path().c_str(), request_.version().c_str(), response_.code(),
                  iovCnt_ == 2 ? iov_[0].iov_len + iov_[1].iov_len : iov_[0].iov_len);
     }
 

@@ -1,17 +1,22 @@
 #include "server/webserver.h"
+#include "config/config.h"
 
 int main() {
-    WebServer webServer(
-            1314, 3, 60000, false,             /* 端口 ET模式 timeoutMs 优雅退出  */
-            "43.143.166.142", 3306, "ws", "123456", "webserver", /* Mysql配置 */
-            12, 20, true, 1024, false);             /* 连接池数量 线程池数量 日志开关 日志等级 日志异步队列容量 */
 
+    WebServer webServer(
+            Config::port, Config::listenET, Config::connectET, Config::timeoutMS,
+            Config::openLinger, Config::threadPoolNum,  // 端口，监听事件ET，连接事件ET，超时时间，优雅关闭，工作线程数量
+            Config::useDatabase, Config::sqlhost, Config::sqlPort, Config::sqlUser, Config::sqlPwd,
+            Config::dbName, Config::connPoolNum,  // 数据库
+            Config::openLog, Config::logQueSize, Config::debugLog);  // 日志
+
+    // Error Check
     std::string error;
     if (webServer.hasError(error)) {
         std::cerr << error << std::endl;
         exit(-1);
     } else {
-        std::cerr << "========== Server start ==========" << std::endl;
+        std::cout << "========== Server start ==========" << std::endl;
         webServer.start();
     }
 }

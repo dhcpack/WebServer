@@ -6,12 +6,12 @@
 #include <iostream>
 
 WebServer::WebServer(
-        int port, int trigMode, int timeoutMS, bool OptLinger,
-        const char *sqlhost, int sqlPort, const char *sqlUser, const char *sqlPwd,
-        const char *dbName, int connPoolNum, int threadNum,
+        uint16_t port, uint32_t listenET, uint32_t connectET, int timeoutMS, bool OptLinger, uint16_t threadPoolNum,
+        bool useDataBase, const char *sqlhost, uint16_t sqlPort, const char *sqlUser, const char *sqlPwd,
+        const char *dbName, uint16_t connPoolNum,
         bool openLog, uint32_t logQueSize, bool debugLog) :
         port_(port), openLinger_(OptLinger), timeoutMS_(timeoutMS), isClose_(false),
-        timer_(new HeapTimer()), threadpool_(new ThreadPool(threadNum)), epoller_(new Epoller()) {
+        timer_(new HeapTimer()), threadpool_(new ThreadPool(threadPoolNum)), epoller_(new Epoller()) {
     // 初始化日志
     if (openLog) {
         if (!Log::instance().init(logQueSize)) {
@@ -20,13 +20,18 @@ WebServer::WebServer(
         }
         Log::debugLog = debugLog;
     }
-    LOG_DEBUG("========== MySql init ==========\n");
     // 初始化数据库
-    if (!MySqlPool::instance().init(sqlhost, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum)) {
-        started_ = false, error_ = "========== MySql init Failed ==========";
-        return;
+    if (useDataBase) {
+        LOG_DEBUG("========== MySql init ==========\n");
+        if (!MySqlPool::instance().init(sqlhost, sqlPort, sqlUser, sqlPwd, dbName, connPoolNum)) {
+            started_ = false, error_ = "========== MySql init Failed ==========";
+            return;
+        }
+        LOG_DEBUG("========== MySql ok ==========\n");
+    } else {
+        LOG_DEBUG("No Database\n");
     }
-    LOG_DEBUG("========== MySql ok ==========\n");
+
 
     srcDir_ = getcwd(nullptr, 256);
     assert(srcDir_);
@@ -35,10 +40,14 @@ WebServer::WebServer(
     HttpConnection::srcDir = srcDir_;
 
     // 初始化触发模式
-    initEventMode_(trigMode);
+    // 关闭链接触发 + 一次触发
+    listenEvent_ = EPOLLRDHUP | listenET;  // 监听事件配置
+    connEvent_ = EPOLLONESHOT | EPOLLRDHUP | connectET;  // 连接事件配置
+    HttpConnection::isET = (connEvent_ & EPOLLET);  // 边缘触发连接
+
     LOG_DEBUG("========== Socket init ==========\n");
     // 初始化端口
-    if (!initSocket_(threadNum)) {
+    if (!initSocket_(threadPoolNum)) {
         isClose_ = true;
         started_ = false, error_ = "========== Socket init Failed ==========";
         return;
@@ -51,32 +60,6 @@ WebServer::~WebServer() {
     isClose_ = true;
     free(srcDir_);
     MySqlPool::instance().ClosePool();
-}
-
-void WebServer::initEventMode_(int trigMode) {
-    // EPOLLONESHOT: 一次触发
-    // EPOLLRDHUP: 监听或连接的对端关闭了连接
-    listenEvent_ = EPOLLRDHUP;  // 监听事件配置
-    connEvent_ = EPOLLONESHOT | EPOLLRDHUP;  // 连接事件配置
-    switch (trigMode) {
-        case 0:
-            break;
-        case 1:
-            connEvent_ |= EPOLLET;
-            break;
-        case 2:
-            listenEvent_ |= EPOLLET;
-            break;
-        case 3:
-            listenEvent_ |= EPOLLET;
-            connEvent_ |= EPOLLET;
-            break;
-        default:
-            listenEvent_ |= EPOLLET;
-            connEvent_ |= EPOLLET;
-            break;
-    }
-    HttpConnection::isET = (connEvent_ & EPOLLET);
 }
 
 // 初始化监听套接字
@@ -92,9 +75,8 @@ bool WebServer::initSocket_(u_int32_t threadNum) {
     addr.sin_port = htons(port_);
     struct linger optLinger = {0};
     if (openLinger_) {
-        /* 优雅关闭: 直到所剩数据发送完毕或超时 */
-        optLinger.l_onoff = 1;
-        optLinger.l_linger = 1;
+        optLinger.l_onoff = 1;  // 优雅关闭
+        optLinger.l_linger = Config::lingerDelayTime;  // 延迟时间1s
     }
 
     // 创建套接字
@@ -152,7 +134,7 @@ bool WebServer::initSocket_(u_int32_t threadNum) {
 }
 
 void WebServer::start() {
-    int timeMS = -1;  /* epoll wait timeout == -1 无事件将阻塞 */
+    int timeMS = -1;  // -1 == infinite
     if (!isClose_) { LOG_INFO("========== Server start ==========\n"); }
     while (!isClose_) {
         if (timeoutMS_ > 0) {

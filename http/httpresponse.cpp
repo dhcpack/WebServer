@@ -3,6 +3,7 @@
 //
 
 #include "httpresponse.h"
+#include "../config/config.h"
 
 /*
  * 初始化类的静态变量
@@ -123,7 +124,8 @@ void HttpResponse::addHeader_(Buffer &buff) {
     buff.Append("Connection: ");
     if (isKeepAlive_) {
         buff.Append("keep-alive\r\n");
-        buff.Append("keep-alive: max=6, timeout=120\r\n");
+        buff.Append("keep-alive: max=" + std::to_string(Config::threadPoolNum) + ", timeout=" +
+                    std::to_string(Config::timeoutMS) + "\r\n");
     } else {
         buff.Append("close_\r\n");
     }

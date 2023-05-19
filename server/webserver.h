@@ -16,9 +16,9 @@
 class WebServer {
 public:
     WebServer(
-            int port, int trigMode, int timeoutMS, bool OptLinger,
-            const char *sqlhost, int sqlPort, const char *sqlUser, const char *sqlPwd,
-            const char *dbName, int connPoolNum, int threadNum,
+            uint16_t port, uint32_t listenET, uint32_t connectET, int timeoutMS, bool OptLinger, uint16_t threadPoolNum,
+            bool useDataBase, const char *sqlhost, uint16_t sqlPort, const char *sqlUser, const char *sqlPwd,
+            const char *dbName, uint16_t connPoolNum,
             bool openLog, uint32_t logQueSize, bool debugLog);
 
     ~WebServer();
@@ -29,8 +29,6 @@ public:
 
 private:
     bool initSocket_(uint32_t threadNum);
-
-    void initEventMode_(int trigMode);
 
     void addClient_(int fd, sockaddr_in addr);
 
@@ -58,7 +56,7 @@ private:
 
     int port_;
     bool openLinger_;
-    int timeoutMS_;  /* 毫秒MS */
+    int timeoutMS_;
     bool isClose_;
     int listenFd_;
     char *srcDir_;
