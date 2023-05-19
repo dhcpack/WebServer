@@ -18,6 +18,10 @@ jobs:
       run: sudo apt-get install -y libpthread-stubs0-dev
     - name: mysqlclient install
       run: sudo apt-get install -y libmysqlclient-dev
+    - name: list
+      run: ls
+    - name: llist
+      run: ls ../
     - name: generate
       run: cmake -S . -B build
     - name: make
