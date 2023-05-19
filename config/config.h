@@ -61,7 +61,7 @@ namespace Config {
     // 输出Debug级日志
     static const bool debugLog = false;
     // 日志文件最大行数
-    static const uint64_t maxLogLine = 50000;
+    static const uint64_t maxLogLine = 500000;
 }
 
 
