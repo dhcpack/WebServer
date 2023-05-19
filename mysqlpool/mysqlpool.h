@@ -40,6 +40,13 @@ private:
     std::queue<MYSQL *> connQueue_;
     std::mutex mutex_;
     sem_t sem_;
+
+    // DB message
+    const char *host_;
+    uint16_t port_;
+    const char *user_;
+    const char *pwd_;
+    const char *dbName_;
 };
 
 // MySqlPoll RAII

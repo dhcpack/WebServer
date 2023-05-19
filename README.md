@@ -71,3 +71,9 @@ epoll对文件描述符的操作有两种模式：LT(Level Trigger,电平触发)
 #./webbench -c 1005 -t 5 http://43.143.166.142:1314/speed.html
 ab -n 10000 -c 1000 http://43.143.166.142:1314/speed.html
 ```
+
+### MySql
+```mysql
+show global variables like '%wait_timeout%';  # 超时时间
+show processlist;  # 查看连接
+```

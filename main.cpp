@@ -11,6 +11,7 @@ int main() {
         std::cerr << error << std::endl;
         exit(-1);
     } else {
+        std::cerr << "========== Server start ==========" << std::endl;
         webServer.start();
     }
 }

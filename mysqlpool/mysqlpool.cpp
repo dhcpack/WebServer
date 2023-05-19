@@ -6,6 +6,7 @@
 
 bool MySqlPool::init(const char *host, uint16_t port, const char *user, const char *pwd, const char *dbName,
                      size_t connSize) {
+    host_ = host, port_ = port, user_ = user, pwd_ = pwd, dbName_ = dbName;
     for (int i = 0; i < connSize; i++) {
         MYSQL *sql;
         if ((sql = mysql_init(nullptr)) == nullptr) {
@@ -39,6 +40,21 @@ MYSQL *MySqlPool::getConn() {
         std::lock_guard<std::mutex> locker(mutex_);
         sql = connQueue_.front();
         connQueue_.pop();
+
+        // 连接超时，重连
+        if (mysql_ping(sql) != 0) {
+            mysql_close(sql);
+            if ((sql = mysql_init(nullptr)) == nullptr) {  // 连接
+                connQueue_.push(sql);
+                return nullptr;
+            }
+            if ((mysql_real_connect(sql, host_, user_, pwd_, dbName_, port_, nullptr, 0)) == nullptr) {  // 初始化
+                connQueue_.push(sql);
+                return nullptr;
+            }
+            LOG_DEBUG("MySql Reconnection!\n");
+            std::cout << "超时重连" << std::endl;
+        }
     }
     return sql;
 }
