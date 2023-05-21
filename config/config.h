@@ -39,15 +39,15 @@ namespace Config {
     // 使用数据库
     static const bool useDatabase = true;
     // 数据库主机
-    static const char *sqlhost = "43.143.166.142";
+    static const char *sqlhost = "Your MySql Host";
     // 数据库端口
     static const uint16_t sqlPort = 3306;
     // 数据库用户
-    static const char *sqlUser = "ws";
+    static const char *sqlUser = "Your MySql User";
     // 数据库密码
-    static const char *sqlPwd = "rJBn4XixtdpsbdrD";
+    static const char *sqlPwd = "Your Mysql Password";
     // 数据库名称
-    static const char *dbName = "webserver";
+    static const char *dbName = "Your MySql DbName";
     // 数据库连接池大小
     static const uint16_t connPoolNum = 12;
 
