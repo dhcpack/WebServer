@@ -92,7 +92,6 @@ void HeapTimer::refresh(u_int id, time_t newExpires) {
 
 // 清除超时节点
 void HeapTimer::tick() {
-    /* 清除超时结点 */
     if (heap_.empty()) {
         return;
     }
@@ -112,7 +111,7 @@ void HeapTimer::pop() {
 
 // 以堆中最小的时间间隔作为下一次的时间间隔
 time_t HeapTimer::getNextTick() {
-    tick();
+    tick();  // 清除超时节点
     time_t res = 0;
     if (!heap_.empty()) {
         res = std::max(std::chrono::duration_cast<MS>(heap_.front().expires - Clock::now()).count(), 0L);
