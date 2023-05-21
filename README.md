@@ -43,8 +43,7 @@ cmake项目
 ```bash
 cmake -S . -B build
 cmake --build build
-cd build
-./WebServer
+cd build && ./WebServer
 ```
 默认运行在1314端口
 

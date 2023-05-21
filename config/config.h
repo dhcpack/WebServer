@@ -29,15 +29,15 @@ namespace Config {
     static const uint32_t connectET = EPOLLET;
     // 工作线程数量
     static const uint16_t threadPoolNum = 20;
-    // 静态资源目录
-    static const char *resourcesDir = "/../resources";
+    // 静态资源目录（需要自定义更改，取决于项目的主目录）
+    static const char *resourcesDir = "/resources";
 
 
     /*
      * 数据库
      * */
     // 使用数据库
-    static const bool useDatabase = true;
+    static const bool useDatabase = false;  // 若使用数据库，需要将useDatabase设置为true并填写下列数据库配置
     // 数据库主机
     static const char *sqlhost = "Your MySql Host";
     // 数据库端口
