@@ -19,7 +19,7 @@ public:
             uint16_t port, uint32_t listenET, uint32_t connectET, int timeoutMS, bool OptLinger, uint16_t threadPoolNum,
             bool useDataBase, const char *sqlhost, uint16_t sqlPort, const char *sqlUser, const char *sqlPwd,
             const char *dbName, uint16_t connPoolNum,
-            bool openLog, uint32_t logQueSize, bool debugLog);
+            bool openLog, uint32_t logQueSize, bool debugLog, const char* resourcesDir);
 
     ~WebServer();
 

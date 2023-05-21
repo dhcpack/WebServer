@@ -3,27 +3,6 @@
 //
 
 #include "httpresponse.h"
-#include "../config/config.h"
-
-/*
- * 初始化类的静态变量
- * */
-/*  GET请求对应的视图函数  */
-std::unordered_map<std::string, std::function<ResponseMessage(std::string)>> HttpResponse::GET_FUNC{
-        {"/index",    get_index},
-        {"/welcome",  get_welcome},
-        {"/video",    get_video},
-        {"/picture",  get_picture},
-        {"/register", get_register},
-        {"/login",    get_login},
-};
-
-/*  POST请求对应的视图函数  */
-std::unordered_map<std::string, std::function<ResponseMessage(
-        std::unordered_map<std::string, std::string>)>> HttpResponse::POST_FUNC{
-        {"/login",    post_login},
-        {"/register", post_register},
-};
 
 /*  文件后缀名到MIME类型的映射  */
 const std::unordered_map<std::string, std::string> HttpResponse::SUFFIX2MIME = {
@@ -83,13 +62,13 @@ void HttpResponse::init(const std::string &srcDir, bool isKeepAlive, bool isBadR
     else if (path == "/") {  // default html
         path_ = "/index.html", code_ = HTTP_STATUS_CODE::OK;
     } else if (method == HTTP_METHOD::GET) {
-        if (GET_FUNC.count(path)) {
-            ResponseMessage getResponse = GET_FUNC[path](path);
+        if (UserFunc::GET_FUNC.count(path)) {
+            ResponseMessage getResponse = UserFunc::GET_FUNC[path](path);
             path_ = getResponse.html_path_.value(), code_ = getResponse.code_;
         } else path_ = path, code_ = HTTP_STATUS_CODE::OK;
     } else if (method == HTTP_METHOD::POST) {
-        if (POST_FUNC.count(path)) {
-            ResponseMessage postResponse = POST_FUNC[path](post);
+        if (UserFunc::POST_FUNC.count(path)) {
+            ResponseMessage postResponse = UserFunc::POST_FUNC[path](post);
             path_ = postResponse.html_path_.value(), code_ = postResponse.code_;
         } else path_ = "/404.html", code_ = HTTP_STATUS_CODE::NOT_FOUND;
     } else path_ = "/404.html", code_ = HTTP_STATUS_CODE::NOT_FOUND;

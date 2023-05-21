@@ -4,6 +4,26 @@
 #include "userfunctions.h"
 
 /*
+ * 可注册自定义的视图函数
+ * */
+/*  GET请求对应的视图函数  */
+std::unordered_map<std::string, std::function<ResponseMessage(std::string)>> UserFunc::GET_FUNC{
+        {"/index",    get_index},
+        {"/welcome",  get_welcome},
+        {"/video",    get_video},
+        {"/picture",  get_picture},
+        {"/register", get_register},
+        {"/login",    get_login},
+};
+
+/*  POST请求对应的视图函数  */
+std::unordered_map<std::string, std::function<ResponseMessage(
+        std::unordered_map<std::string, std::string>)>> UserFunc::POST_FUNC{
+        {"/login",    post_login},
+        {"/register", post_register},
+};
+
+/*
  * [GET] USER DEFINED FUNCS
  * */
 ResponseMessage get_index(const std::string &url) {

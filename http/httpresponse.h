@@ -57,15 +57,6 @@ private:
 
     static const std::unordered_map<std::string, std::string> SUFFIX2MIME;
     static const std::unordered_map<HTTP_STATUS_CODE, std::string> CODE2STATUS;
-
-    /*
-     * USER DEFINED FUNCS
-     * */
-    /*  GET请求对应的视图函数  */
-    static std::unordered_map<std::string, std::function<ResponseMessage(std::string)>> GET_FUNC;
-    /*  POST请求对应的视图函数  */
-    static std::unordered_map<std::string,
-            std::function<ResponseMessage(std::unordered_map<std::string, std::string>)>> POST_FUNC;
 };
 
 #endif //WEBSERVER_HTTPRESPONSE_H

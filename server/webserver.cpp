@@ -9,7 +9,7 @@ WebServer::WebServer(
         uint16_t port, uint32_t listenET, uint32_t connectET, int timeoutMS, bool OptLinger, uint16_t threadPoolNum,
         bool useDataBase, const char *sqlhost, uint16_t sqlPort, const char *sqlUser, const char *sqlPwd,
         const char *dbName, uint16_t connPoolNum,
-        bool openLog, uint32_t logQueSize, bool debugLog) :
+        bool openLog, uint32_t logQueSize, bool debugLog, const char* resourcesDir) :
         port_(port), openLinger_(OptLinger), timeoutMS_(timeoutMS), isClose_(false),
         timer_(new HeapTimer()), threadpool_(new ThreadPool(threadPoolNum)), epoller_(new Epoller()) {
     // 初始化日志
@@ -35,7 +35,7 @@ WebServer::WebServer(
 
     srcDir_ = getcwd(nullptr, 256);
     assert(srcDir_);
-    strncat(srcDir_, "/../resources", 16);  // For clion
+    strncat(srcDir_, resourcesDir, 20);
     HttpConnection::userCount = 0;
     HttpConnection::srcDir = srcDir_;
 
