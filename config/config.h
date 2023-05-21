@@ -29,7 +29,8 @@ namespace Config {
     static const uint32_t connectET = EPOLLET;
     // 工作线程数量
     static const uint16_t threadPoolNum = 20;
-
+    // 网页资源目录
+    static const char *resourcesDir = "/../resources";
 
 
     /*

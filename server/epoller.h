@@ -6,11 +6,9 @@
 #define WEBSERVER_EPOLLER_H
 
 #include <sys/epoll.h> //epoll_ctl()
-#include <fcntl.h>  // fcntl()
 #include <unistd.h> // close()
 #include <cassert> // close()
 #include <vector>
-#include <cerrno>
 
 class Epoller {
 public:
