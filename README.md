@@ -41,6 +41,10 @@ CREATE TABLE user(
 ### 运行方法
 Docker
 ```bash
+# 克隆项目
+git clone git@github.com:dhcpack/WebServer.git
+# 进入目录
+cd WebServer
 # 构建镜像
 docker build -t webserver:v1 .
 # 新建容器并运行，映射到本机1314端口，通过localhost:1314访问
@@ -52,12 +56,22 @@ docker stop WebServer
 ```
 cmake项目
 ```bash
+# 克隆项目
+git clone git@github.com:dhcpack/WebServer.git
+# 进入目录
+cd WebServer
+# 修改Config.h
+# 将33行*resourcesDir改为"/../resources";
+
+# 生成构建目录
 cmake -S . -B build
+# 构建
 cmake --build build
+# 运行
 cd build && ./WebServer
 ```
 默认运行在1314端口
-
+**注意：仓库代码默认不开启数据库，若要使用注册和登录(与数据库相关)功能，请在Config.h中做好配置后运行项目**
 ----
 
 ### 架构
