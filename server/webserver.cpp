@@ -138,7 +138,7 @@ void WebServer::start() {
     if (!isClose_) { LOG_INFO("========== Server start ==========\n"); }
     while (!isClose_) {
         if (timeoutMS_ > 0) {
-            timeMS = timer_->getNextTick();
+            timeMS = timer_->getNextTick();  // 从时间堆中取出最小时间间隔
         }
         int eventCnt = epoller_->wait(timeMS);
         for (int i = 0; i < eventCnt; i++) {
