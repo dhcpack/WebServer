@@ -39,6 +39,17 @@ CREATE TABLE user(
 ----
 
 ### 运行方法
+Docker
+```bash
+# 构建镜像
+docker build -t webserver:v1 .
+# 新建容器并运行，映射到本机1314端口，通过localhost:1314访问
+docker run --name WebServer -p 1314:1314 -d webserver:v1
+# 进入容器
+docker exec -it WebServer /bin/bash
+# 停止容器
+docker stop WebServer 
+```
 cmake项目
 ```bash
 cmake -S . -B build
