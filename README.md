@@ -8,7 +8,7 @@
 
 ----
 
-**使用C++11编写的轻量级高性能服务器，参考Linux高性能服务器编程（游双著）**
+**使用C++17编写的轻量级高性能服务器，参考Linux高性能服务器编程（游双著）**
 - **[阻塞队列](https://github.com/dhcpack/WebServer/tree/main/log)**：使用条件变量实现生产者消费者模式，使用互斥锁确保线程安全
 - **[日志](https://github.com/dhcpack/WebServer/tree/main/log)**：借助阻塞队列实现异步日志，实现日志分级，日志格式参考IIS Web服务器默认格式
 - **[线程池](https://github.com/dhcpack/WebServer/tree/main/threadpool)   [I/O复用](https://github.com/dhcpack/WebServer/tree/main/server)**：利用IO复用技术Epoll和线程池实现多线程的Reactor高并发模型
@@ -17,6 +17,8 @@
 - **[Http请求](https://github.com/dhcpack/WebServer/tree/main/http)**：使用状态机解析Http请求。可自定义并注册视图函数，也可处理对静态资源的请求
 - **[Http响应](https://github.com/dhcpack/WebServer/tree/main/http)**：使用文件映射内存(mmap)，分散读、聚集写(iovec, readv, writev)加快响应速度
 - **[配置文件](https://github.com/dhcpack/WebServer/tree/main/config)**：统一管理和自定义服务器的所有配置
+
+----
 
 ### 环境
 ```cmake
@@ -34,6 +36,8 @@ CREATE TABLE user(
 )ENGINE=InnoDB;
 ```
 
+----
+
 ### 运行方法
 cmake项目
 ```bash
@@ -43,16 +47,20 @@ cmake --build build
 ```
 默认运行在1314端口
 
+----
+
 ### 架构
 #### Epoll + Reactor
 
 ![reactor](docs/image/reactor.png)
 **主线程只负责监听，工作线程做读写数据和处理客户端请求**
 
+----
 
 ### 网站
 [Yuelin's WebServer](http://43.143.166.142:1314/)
 
+----
 
 ### 参考
 - Linux高性能服务器编程（游双著）
