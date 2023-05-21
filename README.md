@@ -22,7 +22,7 @@
 
 ### 环境
 ```cmake
-cmake_minimum_required(VERSION 3.23) 
+cmake_minimum_required(VERSION 3.22) 
 ```
 确保安装了`mysqlclient`链接库，可通过以下命令安装
 ```shell
