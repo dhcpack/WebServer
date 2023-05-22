@@ -71,14 +71,30 @@ cmake --build build
 cd build && ./WebServer
 ```
 默认运行在1314端口
-**注意：仓库代码默认不开启数据库，若要使用注册和登录(与数据库相关)功能，请在Config.h中做好配置后运行项目**
-----
+
+注意：仓库代码默认不开启数据库，若要使用注册和登录(与数据库相关)功能，请在Config.h中做好配置后运行项目
+
+---
 
 ### 架构
 #### Epoll + Reactor
 
 ![reactor](docs/image/reactor.png)
 **主线程只负责监听，工作线程做读写数据和处理客户端请求**
+
+----
+
+### 性能测试
+```shell
+./webbench -c 5000 -t 5 http://localhost:1314/
+```
+![pressure1](docs/image/pressure1.png)
+
+```shell
+./webbench -c 5000 -t 5 http://localhost:1314/speed.html
+```
+![pressure2](docs/image/pressure2.png)
+
 
 ----
 
