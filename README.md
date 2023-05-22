@@ -43,9 +43,9 @@ Docker
 拉取远程镜像
 ```bash
 # 拉取镜像
-docker pull mooneateryuelin/webserver:latest
+docker pull mooneateryuelin/webserver:v2
 # 新建容器并运行，映射到本机1314端口，通过localhost:1314访问
-docker run --name WebServer -p 1314:1314 -d mooneateryuelin/webserver:latest
+docker run --name WebServer -p 1314:1314 -d mooneateryuelin/webserver:v2
 ```
 
 本地构建镜像
@@ -55,9 +55,9 @@ git clone git@github.com:dhcpack/WebServer.git
 # 进入目录
 cd WebServer
 # 构建镜像
-docker build -t webserver:v1 .
+docker build -t webserver:v2 .
 # 新建容器并运行，映射到本机1314端口，通过localhost:1314访问
-docker run --name WebServer -p 1314:1314 -d webserver:v1
+docker run --name WebServer -p 1314:1314 -d webserver:v2
 # 进入容器
 docker exec -it WebServer /bin/bash
 # 停止容器
@@ -76,7 +76,7 @@ cd WebServer
 cmake -S . -B build
 # 构建
 cmake --build build
-# 运行
+# 运行，运行在本机的1314端口，通过localhost:1314访问
 cd build && ./WebServer
 ```
 默认运行在1314端口
