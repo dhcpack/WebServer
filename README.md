@@ -40,6 +40,15 @@ CREATE TABLE user(
 
 ### 运行方法
 Docker
+拉取远程镜像
+```bash
+# 拉取镜像
+docker pull mooneateryuelin/webserver:latest
+# 新建容器并运行，映射到本机1314端口，通过localhost:1314访问
+docker run --name WebServer -p 1314:1314 -d mooneateryuelin/webserver:latest
+```
+
+本地构建镜像
 ```bash
 # 克隆项目
 git clone git@github.com:dhcpack/WebServer.git
@@ -54,7 +63,7 @@ docker exec -it WebServer /bin/bash
 # 停止容器
 docker stop WebServer 
 ```
-cmake项目
+cmake
 ```bash
 # 克隆项目
 git clone git@github.com:dhcpack/WebServer.git
